@@ -1,0 +1,954 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.2" tiledversion="1.3.4" orientation="orthogonal" renderorder="right-down" width="32" height="26" tilewidth="128" tileheight="128" infinite="0" nextlayerid="19" nextobjectid="81">
+ <tileset firstgid="1" name="D" tilewidth="384" tileheight="384" tilecount="10" columns="0">
+  <grid orientation="orthogonal" width="1" height="1"/>
+  <tile id="0">
+   <image width="128" height="128" source="res/D/1.png"/>
+  </tile>
+  <tile id="1">
+   <image width="128" height="128" source="res/D/2.png"/>
+  </tile>
+  <tile id="2">
+   <image width="128" height="128" source="res/D/3.png"/>
+  </tile>
+  <tile id="3">
+   <image width="128" height="128" source="res/D/4.png"/>
+  </tile>
+  <tile id="4">
+   <image width="128" height="128" source="res/D/5.png"/>
+  </tile>
+  <tile id="5">
+   <image width="128" height="128" source="res/D/6.png"/>
+  </tile>
+  <tile id="6">
+   <image width="128" height="128" source="res/D/7.png"/>
+  </tile>
+  <tile id="7">
+   <image width="128" height="128" source="res/D/8.png"/>
+  </tile>
+  <tile id="8">
+   <image width="128" height="128" source="res/D/9.png"/>
+  </tile>
+  <tile id="9">
+   <image width="384" height="384" source="res/D/D.png"/>
+  </tile>
+ </tileset>
+ <tileset firstgid="11" name="RD" tilewidth="384" tileheight="384" tilecount="10" columns="0">
+  <grid orientation="orthogonal" width="1" height="1"/>
+  <tile id="0">
+   <image width="128" height="128" source="res/RD/1.png"/>
+  </tile>
+  <tile id="1">
+   <image width="128" height="128" source="res/RD/2.png"/>
+  </tile>
+  <tile id="2">
+   <image width="128" height="128" source="res/RD/3.png"/>
+  </tile>
+  <tile id="3">
+   <image width="128" height="128" source="res/RD/4.png"/>
+  </tile>
+  <tile id="4">
+   <image width="128" height="128" source="res/RD/5.png"/>
+  </tile>
+  <tile id="5">
+   <image width="128" height="128" source="res/RD/6.png"/>
+  </tile>
+  <tile id="6">
+   <image width="128" height="128" source="res/RD/7.png"/>
+  </tile>
+  <tile id="7">
+   <image width="128" height="128" source="res/RD/8.png"/>
+  </tile>
+  <tile id="8">
+   <image width="128" height="128" source="res/RD/9.png"/>
+  </tile>
+  <tile id="9">
+   <image width="384" height="384" source="res/RD/RD.png"/>
+  </tile>
+ </tileset>
+ <tileset firstgid="21" name="BD" tilewidth="384" tileheight="384" tilecount="10" columns="0">
+  <grid orientation="orthogonal" width="1" height="1"/>
+  <tile id="0">
+   <image width="128" height="128" source="res/BD/1.png"/>
+  </tile>
+  <tile id="1">
+   <image width="128" height="128" source="res/BD/2.png"/>
+  </tile>
+  <tile id="2">
+   <image width="128" height="128" source="res/BD/3.png"/>
+  </tile>
+  <tile id="3">
+   <image width="128" height="128" source="res/BD/4.png"/>
+  </tile>
+  <tile id="4">
+   <image width="128" height="128" source="res/BD/5.png"/>
+  </tile>
+  <tile id="5">
+   <image width="128" height="128" source="res/BD/6.png"/>
+  </tile>
+  <tile id="6">
+   <image width="128" height="128" source="res/BD/7.png"/>
+  </tile>
+  <tile id="7">
+   <image width="128" height="128" source="res/BD/8.png"/>
+  </tile>
+  <tile id="8">
+   <image width="128" height="128" source="res/BD/9.png"/>
+  </tile>
+  <tile id="9">
+   <image width="384" height="384" source="res/BD/BD.png"/>
+  </tile>
+ </tileset>
+ <tileset firstgid="31" name="GD" tilewidth="384" tileheight="384" tilecount="10" columns="0">
+  <grid orientation="orthogonal" width="1" height="1"/>
+  <tile id="0">
+   <image width="128" height="128" source="res/GD/1.png"/>
+  </tile>
+  <tile id="1">
+   <image width="128" height="128" source="res/GD/2.png"/>
+  </tile>
+  <tile id="2">
+   <image width="128" height="128" source="res/GD/3.png"/>
+  </tile>
+  <tile id="3">
+   <image width="128" height="128" source="res/GD/4.png"/>
+  </tile>
+  <tile id="4">
+   <image width="128" height="128" source="res/GD/5.png"/>
+  </tile>
+  <tile id="5">
+   <image width="128" height="128" source="res/GD/6.png"/>
+  </tile>
+  <tile id="6">
+   <image width="128" height="128" source="res/GD/7.png"/>
+  </tile>
+  <tile id="7">
+   <image width="128" height="128" source="res/GD/8.png"/>
+  </tile>
+  <tile id="8">
+   <image width="128" height="128" source="res/GD/9.png"/>
+  </tile>
+  <tile id="9">
+   <image width="384" height="384" source="res/GD/GD.png"/>
+  </tile>
+ </tileset>
+ <tileset firstgid="41" name="RS" tilewidth="384" tileheight="384" tilecount="14" columns="0">
+  <grid orientation="orthogonal" width="1" height="1"/>
+  <tile id="0">
+   <image width="128" height="128" source="res/RS/1.png"/>
+  </tile>
+  <tile id="1">
+   <image width="128" height="128" source="res/RS/2.png"/>
+  </tile>
+  <tile id="2">
+   <image width="128" height="128" source="res/RS/3.png"/>
+  </tile>
+  <tile id="3">
+   <image width="128" height="128" source="res/RS/4.png"/>
+  </tile>
+  <tile id="4">
+   <image width="128" height="128" source="res/RS/5.png"/>
+  </tile>
+  <tile id="5">
+   <image width="128" height="128" source="res/RS/6.png"/>
+  </tile>
+  <tile id="6">
+   <image width="128" height="128" source="res/RS/7.png"/>
+  </tile>
+  <tile id="7">
+   <image width="128" height="128" source="res/RS/8.png"/>
+  </tile>
+  <tile id="8">
+   <image width="128" height="128" source="res/RS/9.png"/>
+  </tile>
+  <tile id="9">
+   <image width="384" height="384" source="res/RS/RS.png"/>
+  </tile>
+  <tile id="10">
+   <image width="128" height="128" source="res/RS/11 (8).png"/>
+  </tile>
+  <tile id="11">
+   <image width="128" height="128" source="res/RS/11 (9).png"/>
+  </tile>
+  <tile id="12">
+   <image width="128" height="128" source="res/RS/11 (10).png"/>
+  </tile>
+  <tile id="13">
+   <image width="128" height="128" source="res/RS/11 (11).png"/>
+  </tile>
+ </tileset>
+ <tileset firstgid="55" name="BS" tilewidth="384" tileheight="384" tilecount="14" columns="0">
+  <grid orientation="orthogonal" width="1" height="1"/>
+  <tile id="0">
+   <image width="128" height="128" source="res/BS/1.png"/>
+  </tile>
+  <tile id="1">
+   <image width="128" height="128" source="res/BS/2.png"/>
+  </tile>
+  <tile id="2">
+   <image width="128" height="128" source="res/BS/3.png"/>
+  </tile>
+  <tile id="3">
+   <image width="128" height="128" source="res/BS/4.png"/>
+  </tile>
+  <tile id="4">
+   <image width="128" height="128" source="res/BS/5.png"/>
+  </tile>
+  <tile id="5">
+   <image width="128" height="128" source="res/BS/6.png"/>
+  </tile>
+  <tile id="6">
+   <image width="128" height="128" source="res/BS/7.png"/>
+  </tile>
+  <tile id="7">
+   <image width="128" height="128" source="res/BS/8.png"/>
+  </tile>
+  <tile id="8">
+   <image width="128" height="128" source="res/BS/9.png"/>
+  </tile>
+  <tile id="9">
+   <image width="384" height="384" source="res/BS/BS.png"/>
+  </tile>
+  <tile id="10">
+   <image width="128" height="128" source="res/BS/11 (4).png"/>
+  </tile>
+  <tile id="11">
+   <image width="128" height="128" source="res/BS/11 (5).png"/>
+  </tile>
+  <tile id="12">
+   <image width="128" height="128" source="res/BS/11 (6).png"/>
+  </tile>
+  <tile id="13">
+   <image width="128" height="128" source="res/BS/11 (7).png"/>
+  </tile>
+ </tileset>
+ <tileset firstgid="69" name="GS" tilewidth="384" tileheight="384" tilecount="14" columns="0">
+  <grid orientation="orthogonal" width="1" height="1"/>
+  <tile id="0">
+   <image width="128" height="128" source="res/GS/1.png"/>
+  </tile>
+  <tile id="1">
+   <image width="128" height="128" source="res/GS/2.png"/>
+  </tile>
+  <tile id="2">
+   <image width="128" height="128" source="res/GS/3.png"/>
+  </tile>
+  <tile id="3">
+   <image width="128" height="128" source="res/GS/4.png"/>
+  </tile>
+  <tile id="4">
+   <image width="128" height="128" source="res/GS/5.png"/>
+  </tile>
+  <tile id="5">
+   <image width="128" height="128" source="res/GS/6.png"/>
+  </tile>
+  <tile id="6">
+   <image width="128" height="128" source="res/GS/7.png"/>
+  </tile>
+  <tile id="7">
+   <image width="128" height="128" source="res/GS/8.png"/>
+  </tile>
+  <tile id="8">
+   <image width="128" height="128" source="res/GS/9.png"/>
+  </tile>
+  <tile id="9">
+   <image width="384" height="384" source="res/GS/GS.png"/>
+  </tile>
+  <tile id="10">
+   <image width="128" height="128" source="res/GS/11 (12).png"/>
+  </tile>
+  <tile id="11">
+   <image width="128" height="128" source="res/GS/11 (13).png"/>
+  </tile>
+  <tile id="12">
+   <image width="128" height="128" source="res/GS/11 (14).png"/>
+  </tile>
+  <tile id="13">
+   <image width="128" height="128" source="res/GS/11 (15).png"/>
+  </tile>
+ </tileset>
+ <tileset firstgid="83" name="DB" tilewidth="384" tileheight="384" tilecount="18" columns="0">
+  <grid orientation="orthogonal" width="1" height="1"/>
+  <tile id="20">
+   <image width="128" height="128" source="res/DB/1.png"/>
+   <objectgroup draworder="index" id="2">
+    <object id="1" x="1" y="117.5">
+     <polygon points="0,0 116,-1.5 115.5,-119 126.5,-118 127.5,10 -1.5,10"/>
+    </object>
+   </objectgroup>
+  </tile>
+  <tile id="21">
+   <image width="128" height="128" source="res/DB/2.png"/>
+   <objectgroup draworder="index" id="2">
+    <object id="1" x="0" y="118">
+     <polygon points="0,0 127.5,-0.5 128,8.5 0,9"/>
+    </object>
+   </objectgroup>
+  </tile>
+  <tile id="22">
+   <image width="128" height="128" source="res/DB/3.png"/>
+   <objectgroup draworder="index" id="2">
+    <object id="1" x="-0.5" y="-1">
+     <polygon points="0,0 10.5,1 10.5,116.5 128.5,117 127.5,127 127.5,128 1,129"/>
+    </object>
+   </objectgroup>
+  </tile>
+  <tile id="23">
+   <image width="128" height="128" source="res/DB/4.png"/>
+   <objectgroup draworder="index" id="3">
+    <object id="2" x="117" y="0.5">
+     <polygon points="0,0 10,0 10.5,125.5 10.5,126.5 1,126.5"/>
+    </object>
+   </objectgroup>
+  </tile>
+  <tile id="24">
+   <image width="128" height="128" source="res/DB/5.png"/>
+  </tile>
+  <tile id="25">
+   <image width="128" height="128" source="res/DB/6.png"/>
+   <objectgroup draworder="index" id="2">
+    <object id="1" x="1" y="0.5">
+     <polygon points="0,0 8,-0.5 9,126 9,127.5 -0.5,127"/>
+    </object>
+   </objectgroup>
+  </tile>
+  <tile id="26">
+   <image width="128" height="128" source="res/DB/7.png"/>
+   <objectgroup draworder="index" id="2">
+    <object id="1" x="1.5" y="11">
+     <polygon points="0,0 116,0.5 117,116.5 126.5,116.5 126,-11.5 -1.5,-10.5"/>
+    </object>
+   </objectgroup>
+  </tile>
+  <tile id="27">
+   <image width="128" height="128" source="res/DB/8.png"/>
+   <objectgroup draworder="index" id="4">
+    <object id="3" x="1" y="11">
+     <polygon points="0,0 127,0 126,-11 -1.5,-10.5"/>
+    </object>
+   </objectgroup>
+  </tile>
+  <tile id="28">
+   <image width="128" height="128" source="res/DB/9.png"/>
+   <objectgroup draworder="index" id="2">
+    <object id="1" x="0" y="1">
+     <polygon points="0,0 127.5,-2 127.5,8.5 9.5,10 10,126.5 0,126"/>
+    </object>
+   </objectgroup>
+  </tile>
+  <tile id="29">
+   <image width="384" height="384" source="res/DB/DB.png"/>
+  </tile>
+  <tile id="34">
+   <image width="128" height="128" source="res/DB/10.png"/>
+  </tile>
+  <tile id="35">
+   <image width="128" height="128" source="res/DB/11.png"/>
+  </tile>
+  <tile id="36">
+   <image width="128" height="128" source="res/DB/12.png"/>
+  </tile>
+  <tile id="37">
+   <image width="128" height="128" source="res/DB/13.png"/>
+  </tile>
+  <tile id="38">
+   <image width="128" height="128" source="res/DB/w1.png"/>
+   <objectgroup draworder="index" id="3">
+    <object id="2" x="0.333333" y="1">
+     <polygon points="0,0 0,9 127.667,8.66667 127.667,-0.666667"/>
+    </object>
+   </objectgroup>
+  </tile>
+  <tile id="39">
+   <image width="128" height="128" source="res/DB/w2.png"/>
+   <objectgroup draworder="index" id="2">
+    <object id="1" x="118.667" y="0.666667">
+     <polygon points="0,0 -0.333333,126.667 9,126.333 8.66667,-0.666667"/>
+    </object>
+   </objectgroup>
+  </tile>
+  <tile id="40">
+   <image width="128" height="128" source="res/DB/w3.png"/>
+   <objectgroup draworder="index" id="2">
+    <object id="1" x="0.666667" y="118.333">
+     <polygon points="0,0 -0.333333,9 126.667,8.66667 126.667,-0.666667"/>
+    </object>
+   </objectgroup>
+  </tile>
+  <tile id="41">
+   <image width="128" height="128" source="res/DB/w4.png"/>
+   <objectgroup draworder="index" id="2">
+    <object id="1" x="0.333333" y="0.333333">
+     <polygon points="0,0 0.333333,127.333 9,127 9.33333,-0.333333"/>
+    </object>
+   </objectgroup>
+  </tile>
+ </tileset>
+ <tileset firstgid="125" name="DS" tilewidth="384" tileheight="384" tilecount="10" columns="0">
+  <grid orientation="orthogonal" width="1" height="1"/>
+  <tile id="0">
+   <image width="128" height="128" source="res/DS/1.png"/>
+  </tile>
+  <tile id="1">
+   <image width="128" height="128" source="res/DS/2.png"/>
+  </tile>
+  <tile id="2">
+   <image width="128" height="128" source="res/DS/3.png"/>
+  </tile>
+  <tile id="3">
+   <image width="128" height="128" source="res/DS/4.png"/>
+  </tile>
+  <tile id="4">
+   <image width="128" height="128" source="res/DS/5.png"/>
+  </tile>
+  <tile id="5">
+   <image width="128" height="128" source="res/DS/6.png"/>
+  </tile>
+  <tile id="6">
+   <image width="128" height="128" source="res/DS/7.png"/>
+  </tile>
+  <tile id="7">
+   <image width="128" height="128" source="res/DS/8.png"/>
+  </tile>
+  <tile id="8">
+   <image width="128" height="128" source="res/DS/9.png"/>
+  </tile>
+  <tile id="9">
+   <image width="384" height="384" source="res/DS/DS.png"/>
+  </tile>
+ </tileset>
+ <tileset firstgid="135" name="YD" tilewidth="384" tileheight="384" tilecount="10" columns="0">
+  <grid orientation="orthogonal" width="1" height="1"/>
+  <tile id="0">
+   <image width="128" height="128" source="res/YD/1.png"/>
+  </tile>
+  <tile id="1">
+   <image width="128" height="128" source="res/YD/2.png"/>
+  </tile>
+  <tile id="2">
+   <image width="128" height="128" source="res/YD/3.png"/>
+  </tile>
+  <tile id="3">
+   <image width="128" height="128" source="res/YD/4.png"/>
+  </tile>
+  <tile id="4">
+   <image width="128" height="128" source="res/YD/5.png"/>
+  </tile>
+  <tile id="5">
+   <image width="128" height="128" source="res/YD/6.png"/>
+  </tile>
+  <tile id="6">
+   <image width="128" height="128" source="res/YD/7.png"/>
+  </tile>
+  <tile id="7">
+   <image width="128" height="128" source="res/YD/8.png"/>
+  </tile>
+  <tile id="8">
+   <image width="128" height="128" source="res/YD/9.png"/>
+  </tile>
+  <tile id="9">
+   <image width="384" height="384" source="res/YD/YD.png"/>
+  </tile>
+ </tileset>
+ <tileset firstgid="145" name="YS" tilewidth="384" tileheight="384" tilecount="14" columns="0">
+  <grid orientation="orthogonal" width="1" height="1"/>
+  <tile id="0">
+   <image width="128" height="128" source="res/YS/1.png"/>
+  </tile>
+  <tile id="1">
+   <image width="128" height="128" source="res/YS/2.png"/>
+  </tile>
+  <tile id="2">
+   <image width="128" height="128" source="res/YS/3.png"/>
+  </tile>
+  <tile id="3">
+   <image width="128" height="128" source="res/YS/4.png"/>
+  </tile>
+  <tile id="4">
+   <image width="128" height="128" source="res/YS/5.png"/>
+  </tile>
+  <tile id="5">
+   <image width="128" height="128" source="res/YS/6.png"/>
+  </tile>
+  <tile id="6">
+   <image width="128" height="128" source="res/YS/7.png"/>
+  </tile>
+  <tile id="7">
+   <image width="128" height="128" source="res/YS/8.png"/>
+  </tile>
+  <tile id="8">
+   <image width="128" height="128" source="res/YS/9.png"/>
+  </tile>
+  <tile id="9">
+   <image width="384" height="384" source="res/YS/YS.png"/>
+  </tile>
+  <tile id="11">
+   <image width="128" height="128" source="res/YS/11 (1).png"/>
+  </tile>
+  <tile id="12">
+   <image width="128" height="128" source="res/YS/11 (2).png"/>
+  </tile>
+  <tile id="13">
+   <image width="128" height="128" source="res/YS/11 (3).png"/>
+  </tile>
+  <tile id="14">
+   <image width="128" height="128" source="res/YS/11.png"/>
+  </tile>
+ </tileset>
+ <tileset firstgid="160" name="Objects" tilewidth="512" tileheight="512" tilecount="50" columns="0">
+  <grid orientation="orthogonal" width="1" height="1"/>
+  <tile id="0">
+   <image width="256" height="128" source="res/Objects/sofa.png"/>
+  </tile>
+  <tile id="1">
+   <image width="256" height="128" source="res/Objects/bed1.png"/>
+  </tile>
+  <tile id="2">
+   <image width="128" height="256" source="res/Objects/bed2.png"/>
+  </tile>
+  <tile id="3">
+   <image width="128" height="256" source="res/Objects/bed3.png"/>
+  </tile>
+  <tile id="4">
+   <image width="256" height="128" source="res/Objects/bed4.png"/>
+  </tile>
+  <tile id="5">
+   <image width="128" height="128" source="res/Objects/chair1.png"/>
+  </tile>
+  <tile id="6">
+   <image width="128" height="128" source="res/Objects/chair2.png"/>
+  </tile>
+  <tile id="7">
+   <image width="128" height="128" source="res/Objects/chair3.png"/>
+  </tile>
+  <tile id="8">
+   <image width="128" height="128" source="res/Objects/chair4.png"/>
+  </tile>
+  <tile id="9">
+   <image width="256" height="256" source="res/Objects/New Project (14).png"/>
+  </tile>
+  <tile id="10">
+   <image width="256" height="256" source="res/Objects/New Project (15).png"/>
+  </tile>
+  <tile id="11">
+   <image width="128" height="128" source="res/Objects/setty.png"/>
+   <objectgroup draworder="index" id="2">
+    <object id="1" x="1" y="37">
+     <polygon points="0,0 126,2 126,89 -3,89"/>
+    </object>
+   </objectgroup>
+  </tile>
+  <tile id="12">
+   <image width="256" height="128" source="res/Objects/sofaB.png"/>
+  </tile>
+  <tile id="13">
+   <image width="256" height="128" source="res/Objects/sofaG1.png"/>
+  </tile>
+  <tile id="14">
+   <image width="256" height="128" source="res/Objects/sofaG2.png"/>
+  </tile>
+  <tile id="15">
+   <image width="256" height="128" source="res/Objects/sofaR1.png"/>
+  </tile>
+  <tile id="16">
+   <image width="256" height="128" source="res/Objects/sofaR2.png"/>
+  </tile>
+  <tile id="17">
+   <image width="128" height="128" source="res/Objects/bush1.png"/>
+  </tile>
+  <tile id="18">
+   <image width="128" height="128" source="res/Objects/bush2.png"/>
+  </tile>
+  <tile id="19">
+   <image width="128" height="256" source="res/Objects/slab1.png"/>
+   <objectgroup draworder="index" id="2">
+    <object id="1" x="72" y="-1">
+     <polygon points="0,0 0,257 -72,258 -72,2"/>
+    </object>
+   </objectgroup>
+  </tile>
+  <tile id="20">
+   <image width="256" height="128" source="res/Objects/slab2.png"/>
+   <objectgroup draworder="index" id="2">
+    <object id="1" x="1" y="56">
+     <polygon points="0,0 254,0 255,68 256,70 0,71"/>
+    </object>
+   </objectgroup>
+  </tile>
+  <tile id="21">
+   <image width="128" height="128" source="res/Objects/chair5.png"/>
+  </tile>
+  <tile id="22">
+   <image width="128" height="128" source="res/Objects/chair7.png"/>
+  </tile>
+  <tile id="23">
+   <image width="128" height="128" source="res/Objects/chair8.png"/>
+  </tile>
+  <tile id="26">
+   <image width="128" height="256" source="res/Objects/bar1.png"/>
+   <objectgroup draworder="index" id="2">
+    <object id="1" x="1" y="0">
+     <polygon points="0,0 68,0 68,255 0,255"/>
+    </object>
+   </objectgroup>
+  </tile>
+  <tile id="27">
+   <image width="256" height="128" source="res/Objects/bar2.png"/>
+   <objectgroup draworder="index" id="2">
+    <object id="1" x="3" y="69">
+     <polygon points="0,0 253,0 253,-70 -5,-70"/>
+    </object>
+   </objectgroup>
+  </tile>
+  <tile id="28">
+   <image width="256" height="128" source="res/Objects/library1.png"/>
+  </tile>
+  <tile id="29">
+   <image width="256" height="128" source="res/Objects/library2.png"/>
+  </tile>
+  <tile id="32">
+   <image width="128" height="128" source="res/Objects/toil1.png"/>
+  </tile>
+  <tile id="33">
+   <image width="128" height="128" source="res/Objects/toil2.png"/>
+  </tile>
+  <tile id="34">
+   <image width="128" height="256" source="res/Objects/tub1 (1).png"/>
+  </tile>
+  <tile id="35">
+   <image width="128" height="256" source="res/Objects/tub2.png"/>
+  </tile>
+  <tile id="36">
+   <image width="256" height="128" source="res/Objects/tub3.png"/>
+  </tile>
+  <tile id="55">
+   <image width="512" height="512" source="res/Objects/jail.png"/>
+  </tile>
+  <tile id="56">
+   <image width="512" height="128" source="res/Objects/tv.png"/>
+  </tile>
+  <tile id="57">
+   <image width="128" height="128" source="res/Objects/box1.png"/>
+  </tile>
+  <tile id="58">
+   <image width="128" height="128" source="res/Objects/box2.png"/>
+  </tile>
+  <tile id="59">
+   <image width="128" height="128" source="res/Objects/chair9.png"/>
+  </tile>
+  <tile id="60">
+   <image width="128" height="256" source="res/Objects/slab3.png"/>
+  </tile>
+  <tile id="61">
+   <image width="256" height="128" source="res/Objects/sofa1.png"/>
+  </tile>
+  <tile id="65">
+   <image width="128" height="128" source="res/Objects/basket.png"/>
+   <objectgroup draworder="index" id="2">
+    <object id="1" x="15" y="19">
+     <polygon points="0,0 93,1 93,88 0,86"/>
+    </object>
+   </objectgroup>
+  </tile>
+  <tile id="66">
+   <image width="128" height="128" source="res/Objects/first_aid.png"/>
+   <objectgroup draworder="index" id="2">
+    <object id="1" x="5" y="0">
+     <polygon points="0,0 3,82 113,83 114,0"/>
+    </object>
+   </objectgroup>
+  </tile>
+  <tile id="67">
+   <image width="128" height="128" source="res/Objects/main_switch.png"/>
+   <objectgroup draworder="index" id="2">
+    <object id="1" x="1" y="0">
+     <polygon points="0,0 128,0 125,76 1,75"/>
+    </object>
+   </objectgroup>
+  </tile>
+  <tile id="68">
+   <image width="128" height="128" source="res/Objects/umbrella1.png"/>
+  </tile>
+  <tile id="69">
+   <image width="128" height="128" source="res/Objects/umbrella2.png"/>
+  </tile>
+  <tile id="71">
+   <image width="128" height="128" source="res/Objects/pool_bed.png"/>
+   <objectgroup draworder="index" id="2">
+    <object id="1" x="20" y="3">
+     <polygon points="0,0 87,-2 87,123 3,123"/>
+    </object>
+   </objectgroup>
+  </tile>
+  <tile id="72">
+   <image width="128" height="128" source="res/Objects/fridge.png"/>
+  </tile>
+  <tile id="73">
+   <image width="128" height="42" source="res/Objects/door1.png"/>
+  </tile>
+  <tile id="74">
+   <image width="42" height="128" source="res/Objects/door2.png"/>
+  </tile>
+  <tile id="75">
+   <image width="384" height="256" source="res/Objects/kitchen.png"/>
+   <objectgroup draworder="index" id="2">
+    <object id="1" x="23" y="130">
+     <polygon points="0,0 338,-2 340,125 -1,126"/>
+    </object>
+   </objectgroup>
+  </tile>
+ </tileset>
+ <tileset firstgid="236" name="AD" tilewidth="384" tileheight="384" tilecount="10" columns="0">
+  <grid orientation="orthogonal" width="1" height="1"/>
+  <tile id="0">
+   <image width="128" height="128" source="res/AD/1.png"/>
+  </tile>
+  <tile id="1">
+   <image width="128" height="128" source="res/AD/2.png"/>
+  </tile>
+  <tile id="2">
+   <image width="128" height="128" source="res/AD/3.png"/>
+  </tile>
+  <tile id="3">
+   <image width="128" height="128" source="res/AD/4.png"/>
+  </tile>
+  <tile id="4">
+   <image width="128" height="128" source="res/AD/5.png"/>
+  </tile>
+  <tile id="5">
+   <image width="128" height="128" source="res/AD/6.png"/>
+  </tile>
+  <tile id="6">
+   <image width="128" height="128" source="res/AD/7.png"/>
+  </tile>
+  <tile id="7">
+   <image width="128" height="128" source="res/AD/8.png"/>
+  </tile>
+  <tile id="8">
+   <image width="128" height="128" source="res/AD/9.png"/>
+  </tile>
+  <tile id="9">
+   <image width="384" height="384" source="res/AD/RD.png"/>
+  </tile>
+ </tileset>
+ <tileset firstgid="246" name="AS" tilewidth="384" tileheight="384" tilecount="9" columns="0">
+  <grid orientation="orthogonal" width="1" height="1"/>
+  <tile id="0">
+   <image width="128" height="128" source="res/AS/1.png"/>
+  </tile>
+  <tile id="1">
+   <image width="128" height="128" source="res/AS/2.png"/>
+  </tile>
+  <tile id="2">
+   <image width="128" height="128" source="res/AS/3.png"/>
+  </tile>
+  <tile id="3">
+   <image width="128" height="128" source="res/AS/4.png"/>
+  </tile>
+  <tile id="4">
+   <image width="128" height="128" source="res/AS/5.png"/>
+  </tile>
+  <tile id="5">
+   <image width="128" height="128" source="res/AS/6.png"/>
+  </tile>
+  <tile id="6">
+   <image width="128" height="128" source="res/AS/7.png"/>
+  </tile>
+  <tile id="7">
+   <image width="128" height="128" source="res/AS/8.png"/>
+  </tile>
+  <tile id="8">
+   <image width="384" height="384" source="res/AS/AS.png"/>
+  </tile>
+ </tileset>
+ <tileset firstgid="255" name="PD" tilewidth="384" tileheight="384" tilecount="10" columns="0">
+  <grid orientation="orthogonal" width="1" height="1"/>
+  <tile id="0">
+   <image width="128" height="128" source="res/PD/1.png"/>
+  </tile>
+  <tile id="1">
+   <image width="128" height="128" source="res/PD/2.png"/>
+  </tile>
+  <tile id="2">
+   <image width="128" height="128" source="res/PD/3.png"/>
+  </tile>
+  <tile id="3">
+   <image width="128" height="128" source="res/PD/4.png"/>
+  </tile>
+  <tile id="4">
+   <image width="128" height="128" source="res/PD/5.png"/>
+  </tile>
+  <tile id="5">
+   <image width="128" height="128" source="res/PD/6.png"/>
+  </tile>
+  <tile id="6">
+   <image width="128" height="128" source="res/PD/7.png"/>
+  </tile>
+  <tile id="7">
+   <image width="128" height="128" source="res/PD/8.png"/>
+  </tile>
+  <tile id="8">
+   <image width="128" height="128" source="res/PD/9.png"/>
+  </tile>
+  <tile id="9">
+   <image width="384" height="384" source="res/PD/PD.png"/>
+  </tile>
+ </tileset>
+ <tileset firstgid="265" name="PS" tilewidth="384" tileheight="384" tilecount="10" columns="0">
+  <grid orientation="orthogonal" width="1" height="1"/>
+  <tile id="0">
+   <image width="128" height="128" source="res/PS/1.png"/>
+  </tile>
+  <tile id="1">
+   <image width="128" height="128" source="res/PS/2.png"/>
+  </tile>
+  <tile id="2">
+   <image width="128" height="128" source="res/PS/3.png"/>
+  </tile>
+  <tile id="3">
+   <image width="128" height="128" source="res/PS/4.png"/>
+  </tile>
+  <tile id="4">
+   <image width="128" height="128" source="res/PS/5.png"/>
+  </tile>
+  <tile id="5">
+   <image width="128" height="128" source="res/PS/6.png"/>
+  </tile>
+  <tile id="6">
+   <image width="128" height="128" source="res/PS/7.png"/>
+  </tile>
+  <tile id="7">
+   <image width="128" height="128" source="res/PS/8.png"/>
+  </tile>
+  <tile id="8">
+   <image width="128" height="128" source="res/PS/9.png"/>
+  </tile>
+  <tile id="9">
+   <image width="384" height="384" source="res/PS/RS.png"/>
+  </tile>
+ </tileset>
+ <tileset firstgid="275" name="Pool" tilewidth="128" tileheight="128" tilecount="10" columns="0">
+  <grid orientation="orthogonal" width="1" height="1"/>
+  <tile id="0">
+   <image width="128" height="128" source="res/Pool/pool1.png"/>
+  </tile>
+  <tile id="1">
+   <image width="128" height="128" source="res/Pool/pool2.png"/>
+  </tile>
+  <tile id="2">
+   <image width="128" height="128" source="res/Pool/pool3.png"/>
+  </tile>
+  <tile id="3">
+   <image width="128" height="128" source="res/Pool/pool4.png"/>
+  </tile>
+  <tile id="4">
+   <image width="128" height="128" source="res/Pool/pool5.png"/>
+  </tile>
+  <tile id="5">
+   <image width="128" height="128" source="res/Pool/pool6.png"/>
+  </tile>
+  <tile id="6">
+   <image width="128" height="128" source="res/Pool/pool7.png"/>
+  </tile>
+  <tile id="7">
+   <image width="128" height="128" source="res/Pool/pool8.png"/>
+  </tile>
+  <tile id="8">
+   <image width="128" height="128" source="res/Pool/pool9.png"/>
+  </tile>
+  <tile id="9">
+   <image width="128" height="128" source="res/Pool/pool_tube.png"/>
+  </tile>
+ </tileset>
+ <layer id="12" name="Floor" width="32" height="26">
+  <data encoding="base64" compression="zlib">
+   eJzFltlPU0EUxufSQr2ALFZoaSWKa1Dj8qQQ0Re3uDz4xyC8gE0LccEluKH/o7uN4hb9Tu456cd0ppIIcZJf7sx05nxnziyns+7/ldv6fQ1egTWwDJa2iQY4DU6Bk+THS/ACPAGp5+PsFqzPitgugp3gOPU/A0/BasTOcOLc0CYZTLIYNiK2joGjYJL6lqk+B3q9OQOw+Vsq+Cagi9o5kAfdoAf0gzp+qulctjVPdfbvjqcnccuBvMtiVgjoWNv3y9fvkfmufR8XqH4BnFdmtE/m7AisP0/r7+qwfrNv65ByE9xQrpP+OTAKSmBa+xKxT/q+ThLwyeJR0LOQenaugX1gAlz19CugDMY15t0aOyl9MNIboKCEfkuTbK7ZEZtHwH6w19OfAmPgLDjj2ovdox/gO9FUuO+bjg3d2yvgsvpxifplXw641t4wvE/r4A14C96B99T+qO1fNJ7PFSMxnqFxvC8Wn8Na5ziJ/gfV+gQ+B9qsL/s64lpnq0ztaRpncRFuqS+H1B+JVao0O6zf2k0aL/qyr3K2quCiy/bY32d78xsaiwnVP7gF6y+RD7bmJbexyPuzqNj5sHjwOVnXdfqaHAPWn6L1juvXdPj9sfxnPKb6Go376bL4fo0gv32h8ZbrhCLVQ/nvLrgH7oMHYEXrlhPt7a65eKnrd861cl0f6HdZzhsAu8CwC+e/EJYT5Q3Lqb4fL4tT3W18by3XhYjlv1CR9Vgeqam/EiuO0arq23s3HzJEhfOfzLN32vw3vVxkfhqpc8mRPwXPfs3TL8KBksfu5N///8Ts+voV9FXBHvqWNYeE9tv2nM946HxXPJtVtevrj6JvzGNEc6js70PXfkeegxOu/YxLW85+2sGur297JP85eM9MXzRX1I9HLnsjTF90h1x2r+R+DZI+2+Uzxvr8/vnIOxW7n3LmY3dschN2pfztnmxnkXv9B/Z1x38=
+  </data>
+ </layer>
+ <layer id="13" name="Object" width="32" height="26" visible="0">
+  <data encoding="base64" compression="zlib">
+   eJxjYBg84OAA2bGZDvaigzskqN2Ixr9BhNoDJLmG+oDa9m9AowmJk2L/LSC+CcW3SHYZdoDNfkrsIdX/Aw0e0sBM9HxArhpq6KEUINu5EE1uKRQTAiA1t4lQdxtN3RIi9OADK7CILafQTORyeRUR9q+EsmE0PvtXovHR64BDePRSko7x6T1Mhh3EpFNizaLEX3uh9B40PrngNRaxLRSaicscbHaRC+5S0SwQeI6DPVjNHQWjYKgDALndNU8=
+  </data>
+ </layer>
+ <objectgroup id="18" name="Other" visible="0">
+  <object id="65" gid="226" x="1664" y="1290" width="128" height="128">
+   <properties>
+    <property name="count" type="int" value="2"/>
+    <property name="id" type="int" value="0"/>
+   </properties>
+  </object>
+  <object id="66" gid="227" x="2304.5" y="1289.5" width="128" height="128">
+   <properties>
+    <property name="id" type="int" value="1"/>
+   </properties>
+  </object>
+ </objectgroup>
+ <layer id="11" name="Wall" width="32" height="26" visible="0">
+  <data encoding="base64" compression="zlib">
+   eJzVlusOgyAMhfu2bovO3+rebC+3kdDkeFJLUciykzQIQj/KXUTk9iNLesheL+mnlfKjwbd0JT5PFn+kfKR/rDSGW8CX8pevPbOxWvIFOAvwU92acTvLR4b+t+LDdq3iP+L04Fuq4ZfaRWXNv8Xfcn7Ldpf9XKW1MuUUTcXlc07RxwD+lRXd/9F6tfX/hd9LeP6oWed/y/h1bfD5gyaUP8v3fF5Zf+wHGVb9qN+S9H6w5milOhHV9BPl8VU18eP9ZxkrwpeCT1x/SbxGsEzbTNQn63umcs8v8r2YrLfNAN98XuM97vmN8Evz6L0Xxwb8kkrv1Sj/fZBe5Xt+o/vPYxz9i4yd7mtvn/S0pA+9EY17
+  </data>
+ </layer>
+ <objectgroup id="14" name="Door" visible="0">
+  <object id="67" gid="234" x="485" y="384" width="64" height="128">
+   <properties>
+    <property name="id" type="int" value="0"/>
+    <property name="key" value="YELLOW"/>
+    <property name="locked" value="1"/>
+   </properties>
+  </object>
+  <object id="70" gid="234" x="613" y="1152" width="64" height="128">
+   <properties>
+    <property name="id" type="int" value="2"/>
+    <property name="key" value="BLUE"/>
+    <property name="locked" value="1"/>
+   </properties>
+  </object>
+  <object id="71" gid="234" x="1124" y="1663.5" width="64" height="128">
+   <properties>
+    <property name="id" type="int" value="4"/>
+    <property name="key" value="GREEN"/>
+    <property name="locked" value="1"/>
+   </properties>
+  </object>
+  <object id="73" gid="234" x="3548" y="384" width="64" height="128">
+   <properties>
+    <property name="id" type="int" value="1"/>
+    <property name="key" value="RED"/>
+    <property name="locked" value="1"/>
+   </properties>
+  </object>
+  <object id="74" gid="234" x="3424" y="1151" width="64" height="128">
+   <properties>
+    <property name="id" type="int" value="3"/>
+    <property name="key" value="GREEN"/>
+    <property name="locked" value="1"/>
+   </properties>
+  </object>
+  <object id="75" gid="234" x="2908" y="1664" width="64" height="128">
+   <properties>
+    <property name="id" type="int" value="5"/>
+    <property name="key" value="BLUE"/>
+    <property name="locked" value="1"/>
+   </properties>
+  </object>
+  <object id="79" gid="234" x="1124.58" y="2175.36" width="64" height="128">
+   <properties>
+    <property name="id" type="int" value="6"/>
+    <property name="key" value="YELLOW"/>
+    <property name="locked" value="1"/>
+   </properties>
+  </object>
+  <object id="80" gid="234" x="2908.67" y="2175.33" width="64" height="128">
+   <properties>
+    <property name="id" type="int" value="7"/>
+    <property name="key" value="RED"/>
+    <property name="locked" value="1"/>
+   </properties>
+  </object>
+ </objectgroup>
+ <layer id="15" name="Jail" width="32" height="26" visible="0">
+  <data encoding="base64" compression="zlib">
+   eJzt1EEJAAAIBMHrX9A6dhBEkJkC+9uEa/W0BbDFywCYakEYAoY=
+  </data>
+ </layer>
+</map>
