@@ -24,10 +24,14 @@ def disconnect(sid):
 
 
 @sio.event
-def status(sid, stat):
-    players[sid]['status'] = stat
-    data = {'player': (sid, stat)}
+def ready(sid):
+    players[sid]['status'] = 2
+    data = {'player': (sid, 2)}
     sio.emit('status', data)
+
+    if list(map(lambda p:p['status'],players.values())).count(2) == 2:
+        print('start')
+        sio.emit('start', 1)
 
 
 @sio.event

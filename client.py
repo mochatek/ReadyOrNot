@@ -49,6 +49,13 @@ def setupNetwork(io):
         game.msg = "Can't connect with server. Try again later."
 
     @sio.event
+    def start(flag):
+        print('start')
+        if flag == 1:
+            view = InfoView()
+            game.window.show_view(view)
+
+    @sio.event
     def status(data):
         sid, stat = data['player']
         if sid == game.player.id:
@@ -192,8 +199,9 @@ class LobbyView(arcade.View):
             self.io.disconnect()
 
     def on_key_press(self, key, modifiers):
-        if key == arcade.key.R:
-            self.io.emit('status', 2)
+        if self.joined:
+            if key == arcade.key.R:
+                self.io.emit('ready')
 
 
 
