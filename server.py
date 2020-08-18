@@ -16,7 +16,19 @@ def connect(sid, environ):
 
 @sio.event
 def disconnect(sid):
+    del players[sid]
+    data = {'player': (sid, 0)}
+    sio.emit('disconnect', to=sid)
+    sio.emit('status', data, skip_sid=sid)
     print('disconnect ', sid)
+
+
+@sio.event
+def status(sid, stat):
+    players[sid]['status'] = stat
+    data = {'player': (sid, stat)}
+    sio.emit('status', data)
+
 
 @sio.event
 def join(sid, data):
