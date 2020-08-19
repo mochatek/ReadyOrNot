@@ -33,6 +33,10 @@ def ready(sid):
         print('start')
         sio.emit('start', 1)
 
+@sio.event
+def move(sid, direction):
+    data = {'player': (sid, direction)}
+    sio.emit('move', data)
 
 @sio.event
 def join(sid, data):
@@ -44,7 +48,8 @@ def join(sid, data):
         'tex': 0,
         'team': team,
         'status': 1,
-        'pos': choice(pos[team])
+        # 'pos': choice(pos[team])
+        'pos': pos[0][0]
     }
     new = tuple(players[sid].values())
     data = {
