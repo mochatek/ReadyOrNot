@@ -12,11 +12,11 @@ class Item(Sprite):
             'G': ('gun', '9MM Pistol', 5, 0.1),
             'K': ('knife', "Kitchen Knife", 2, 0.5),
             'C': ('cash', 'Cash Bundles', '10 Lakh rupees'),
-            'PH': ('phone', 'Brand new IPhone 11', '[ Worth Rs.100K ]'),
+            'PH': ('phone', 'IPhone 11', '[ Worth Rs.100K ]'),
             'L': ('lap', 'Macbook Pro', '[ Worth Rs.160K ]'),
             'PA': ('painting', 'Monalisa Painting', '[ Worth Rs.5200 Cr ]'),
             'W': ('watch', 'Patek Luxury Watch', '[ Worth Rs.30 Cr ]'),
-            'B': ('key', "BMW 3.0 CSL Key", '[ Car worths Rs.12 Cr ]'),
+            'B': ('key', "BMW Key", '[ Car worths Rs.12 Cr ]'),
         }
 
         super().__init__('res\Items\{}.png'.format(item_dict[item][0]))
@@ -24,15 +24,17 @@ class Item(Sprite):
         self.id = ID
         self.scale = ITEM_SCALE
         self.position = pos
-        self.item = item_dict[item][1]
+        self.name = item_dict[item][1]
         self.taken = False
         if item in ['G', 'K']:
             self.range = item_dict[item][2]
             self.damage = item_dict[item][3]
             self.info = '[ Range : {} , Damage : -{}% ]'.format(self.range, self.damage * 100)
         else:
-            self.info = item_dict[item][2]
+            self.info = '{}: {}'.format(item_dict[item][1], item_dict[item][2])
 
     def update(self):
         if self.taken:
             self.alpha = 0
+        else:
+            self.alpha = 255

@@ -1,6 +1,7 @@
 import socketio
 
 from _thread import start_new_thread
+from textwrap import wrap
 
 import arcade
 from aim import Aim
@@ -13,6 +14,7 @@ SCALING = 0.25
 TITLE = "Ready or Not ?"
 SPEED = 0.75
 MARGIN = 160
+BAG_CAPACITY = 4
 
 game = None
 
@@ -43,9 +45,31 @@ def setupNetwork(io):
         game.others.append(Player(id, name, life, tex, team, stat, pos))
 
     @sio.event
+    def item(data):
+        pid = data['item'][0]
+        action = 'picked up'
+        item_ids = data['item'][1]
+        status = data['item'][2]
+        names = []
+        for id in item_ids:
+            item = list(filter(lambda i: i.id == id, game.item_list))[0]
+            item.taken = status
+            if len(data['item']) == 4:
+                item.position = data['item'][3]
+                game.player.items.pop(game.player.items.index(id))
+                action = 'dropped'
+            else:
+                game.player.items.append(id)
+            names.append(item.name)
+        if pid == game.player.id:
+            names = ', '.join(names)
+            names = wrap(names, 40)
+            game.info = 'You {} {}'.format(action, '\n'.join(names))
+
+    @sio.event
     def move(data):
         sid, position, direction = data['player']
-        speed = {0: (0, SPEED), 1: (0, -SPEED), 2: (-SPEED, 0), 3: (SPEED, 0)}
+        speed = {-1: (0, 0), 0: (0, SPEED), 1: (0, -SPEED), 2: (-SPEED, 0), 3: (SPEED, 0)}
         if game.player.id == sid:
             game.position = position
             game.player.change_x, game.player.change_y = speed[direction]
@@ -126,6 +150,7 @@ class ScreenView(arcade.View):
                 self.team = 1
 
         if self.team != -1:
+            self.msg = 'Trying to connect with server. Please wait.'
             self.io = socketio.Client()
             start_new_thread(setupNetwork, (self.io, ))
 
@@ -249,11 +274,9 @@ class GameView(arcade.View):
             self.item_list.append(Item(id, position, item_code))
             id += 1
 
+        self.task = {0: "Theives inside. Catch everyone.", 1: "Loot Everything you can. (Be ware of Guards)"}
         # Set initial game message.
-        if self.player.team == 0:
-            self.info = "Theives inside. Catch everyone."
-        else:
-            self.info = "Loot Everything you can. (Be ware of Guards)"
+        self.info = self.task[self.player.team]
         # Initialize Aiming control.
         self.aim = Aim(self.player.position)
         # Physics engine for the game.
@@ -279,7 +302,7 @@ class GameView(arcade.View):
 
         # Display players with life and name.
         arcade.draw_xywh_rectangle_filled(self.player.left, self.player.top + 2, self.player.width * self.player.life, 3, arcade.color.GREEN)
-        arcade.draw_text(self.player.name, self.player.center_x - 12, self.player.center_y + 16, arcade.color.BLUE, 8)
+        # arcade.draw_text(self.player.name, self.player.center_x - 12, self.player.center_y + 16, arcade.color.BLUE, 8)
 
         # Display others life and name based on team.
         for player in self.others:
@@ -306,6 +329,19 @@ class GameView(arcade.View):
         self.player_list.update()
         self.others.update()
         self.item_list.update()
+
+        items = arcade.check_for_collision_with_list(self.player, self.item_list)
+        if items:
+            items = list(filter(lambda i: not i.taken, items))
+            if len(items) > 0:
+                self.info = items[0].info
+            else:
+                if not self.info.startswith('You'):
+                    self.info = self.task[self.player.team]
+        else:
+            if not self.info.startswith('You'):
+                self.info = self.task[self.player.team]
+
         # Update Viewport based on player movement.
         self.scroll_screen()
 
@@ -368,6 +404,39 @@ class GameView(arcade.View):
             self.io.emit('move', {'move': (self.player.position, 0)})
         elif symbol == arcade.key.S and self.player.change_y != -SPEED:
             self.io.emit('move', {'move': (self.player.position, 1)})
+        elif symbol == arcade.key.SPACE and (self.player.change_x + self.player.change_y) != 0:
+            self.io.emit('move', {'move': (self.player.position, -1)})
+
+
+        elif symbol == arcade.key.F:
+            inventory = len(self.player.items)
+            if inventory < BAG_CAPACITY:
+                items = arcade.check_for_collision_with_list(self.player, self.item_list)
+                if items:
+                    items = list(filter(lambda i: not i.taken, items))
+                    if len(items) > 0:
+                        pickups = []
+                        for item in items:
+                            if inventory < BAG_CAPACITY:
+                                if item.id not in self.player.items:
+                                    pickups.append(item.id)
+                                    inventory += 1
+                                else:
+                                    self.info = "You already have it with you. Can't pick up again !"
+                            else:
+                                self.info = 'Your inventory is full ! [ MAX: 4 items ]'
+
+                        self.io.emit('item', {'item': (self.player.id, pickups, 1)})
+            else:
+                self.info = 'Your inventory is ful1 ! [ MAX: 4 items ]'
+
+
+        elif symbol == arcade.key.E:
+            if len(self.player.items) == 0:
+                self.info = 'Your inventory is empty !'
+            else:
+                drop = self.player.items[-1]
+                self.io.emit('item', {'item': (self.player.id, [drop], 0, self.player.position)})
 
 
 def main():

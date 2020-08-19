@@ -46,6 +46,10 @@ def move(sid, data):
     sio.emit('move', data)
 
 @sio.event
+def item(sid, data):
+    sio.emit('item', data)
+
+@sio.event
 def join(sid, data):
     name, team =  data
     players[sid] = {

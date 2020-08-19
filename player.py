@@ -23,7 +23,6 @@ class Player(Sprite):
         self.items = []
         self.cur_item = -1
         self.in_jail = False
-        self.draw_hit_box()
 
     def update(self):
         # self.set_texture(self.cur_texture_index)
