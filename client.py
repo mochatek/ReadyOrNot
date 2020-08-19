@@ -12,7 +12,6 @@ SCREEN_HEIGHT = 400
 SCALING = 0.25
 TITLE = "Ready or Not ?"
 SPEED = 0.75
-ITEM_SCALE = 0.3
 MARGIN = 160
 
 game = None
@@ -24,7 +23,8 @@ def setupNetwork(io):
     @sio.event
     def connect():
         print('connected')
-        game.msg = 'success'
+        view = LobbyView(game.team, sio)
+        game.window.show_view(view)
 
     @sio.event
     def init(data):
@@ -44,12 +44,14 @@ def setupNetwork(io):
 
     @sio.event
     def move(data):
-        sid, direction = data['player']
+        sid, position, direction = data['player']
         speed = {0: (0, SPEED), 1: (0, -SPEED), 2: (-SPEED, 0), 3: (SPEED, 0)}
         if game.player.id == sid:
+            game.position = position
             game.player.change_x, game.player.change_y = speed[direction]
         else:
             player = list(filter(lambda p: p.id == sid, game.others))[0]
+            player.position = position
             player.change_x, player.change_y = speed[direction]
 
     @sio.event
@@ -57,9 +59,10 @@ def setupNetwork(io):
         game.msg = "Can't connect with server. Try again later."
 
     @sio.event
-    def start(flag):
-        if flag == 1:
-            view = GameView(game.io, game.player, game.others)
+    def gameStat(data):
+        if data.get('start', -1) != -1:
+            items = data['start']
+            view = GameView(game.io, game.player, game.others, items)
             game.window.show_view(view)
 
     @sio.event
@@ -104,13 +107,9 @@ class ScreenView(arcade.View):
     def on_draw(self):
         arcade.start_render()
         arcade.draw_lrwh_rectangle_textured(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, self.bg)
-        if self.msg and self.msg != 'success':
+        if self.msg:
             arcade.draw_text(self.msg, 110, 380, arcade.color.ANTIQUE_WHITE, 8, font_name=('Times New Roman'))
 
-    def on_update(self, dt):
-        if self.msg == 'success':
-            view = LobbyView(self.team, self.io)
-            self.window.show_view(view)
 
     def on_mouse_press(self, x, y, button, modifiers):
         # If player pressed setting button, show info.
@@ -212,8 +211,10 @@ class LobbyView(arcade.View):
 
 
 class GameView(arcade.View):
-    def __init__(self, io, player, others):
+    def __init__(self, io, player, others, items):
         super().__init__()
+        global game
+        game =  self
         self.io = io
         self.view_left = 0
         self.view_bottom = 0
@@ -239,6 +240,15 @@ class GameView(arcade.View):
         self.player_list = arcade.SpriteList()
         self.player_list.append(self.player)
         self.others = others
+
+        self.item_list = arcade.SpriteList()
+        self.load_items()
+        id = 14
+        for item in items:
+            item_code, position = item
+            self.item_list.append(Item(id, position, item_code))
+            id += 1
+
         # Set initial game message.
         if self.player.team == 0:
             self.info = "Theives inside. Catch everyone."
@@ -261,6 +271,7 @@ class GameView(arcade.View):
         self.block_list.draw()
 
         self.jail_list.draw()
+        self.item_list.draw()
 
         # Display player and all other players.
         self.player_list.draw()
@@ -294,13 +305,25 @@ class GameView(arcade.View):
             physics.update()
         self.player_list.update()
         self.others.update()
-
+        self.item_list.update()
         # Update Viewport based on player movement.
         self.scroll_screen()
 
-        # for player in self.others:
-        #     if len(arcade.check_for_collision_with_list(player, self.block_list)) > 0:
-        #         player.change_x, player.change_y = 0, 0
+    def load_items(self):
+        self.item_list.append(Item(0, (400,82), 'YELLOW'))
+        self.item_list.append(Item(1, (620, 82), 'RED'))
+        self.item_list.append(Item(2, (110, 370), 'BLUE'))
+        self.item_list.append(Item(3, (400, 495), 'BLUE'))
+        self.item_list.append(Item(4, (95, 675), 'GREEN'))
+        self.item_list.append(Item(5, (815, 690), 'GREEN'))
+        self.item_list.append(Item(6, (80, 305), 'K'))
+        self.item_list.append(Item(7, (205, 305), 'K'))
+        self.item_list.append(Item(8, (820, 305), 'K'))
+        self.item_list.append(Item(9, (940, 305), 'K'))
+        self.item_list.append(Item(10, (910, 585), 'G'))
+        self.item_list.append(Item(11, (970, 555), 'G'))
+        self.item_list.append(Item(12, (110, 585), 'G'))
+        self.item_list.append(Item(13, (60, 585), 'G'))
 
     # Scrolling screen according to player movement.
     def scroll_screen(self):
@@ -338,13 +361,14 @@ class GameView(arcade.View):
 
     def on_key_press(self, symbol, modifiers):
         if symbol == arcade.key.D and self.player.change_x != SPEED:
-            self.io.emit('move', 3)
+            self.io.emit('move', {'move': (self.player.position, 3)})
         elif symbol == arcade.key.A and self.player.change_x != -SPEED:
-            self.io.emit('move', 2)
+            self.io.emit('move', {'move': (self.player.position, 2)})
         elif symbol == arcade.key.W and self.player.change_y != SPEED:
-            self.io.emit('move', 0)
+            self.io.emit('move', {'move': (self.player.position, 0)})
         elif symbol == arcade.key.S and self.player.change_y != -SPEED:
-            self.io.emit('move', 1)
+            self.io.emit('move', {'move': (self.player.position, 1)})
+
 
 def main():
     window = arcade.Window(SCREEN_WIDTH, SCREEN_HEIGHT, TITLE)

@@ -1,9 +1,13 @@
 import eventlet
 import socketio
-from random import choice
+from random import choice, shuffle
 
 # Cop:0 Thief:1
 pos = {0:[(330,110), (380,110) ], 1:[(680,110), (730,110)]}
+items = {
+    'item': ['W', 'C', 'PA', 'PH', 'B', 'L'],
+    'pos': [(770, 430), (970, 435), (225, 640), (125, 455), (395, 690), (255, 480)]
+    }
 
 players = {}
 
@@ -30,12 +34,15 @@ def ready(sid):
     sio.emit('status', data)
 
     if list(map(lambda p:p['status'],players.values())).count(2) == 2:
-        print('start')
-        sio.emit('start', 1)
+        shuffle(items['item'])
+        shuffle(items['pos'])
+        data = {'start': tuple(zip(items['item'], items['pos']))}
+        sio.emit('gameStat', data)
 
 @sio.event
-def move(sid, direction):
-    data = {'player': (sid, direction)}
+def move(sid, data):
+    position, direction = data['move']
+    data = {'player': (sid, position, direction)}
     sio.emit('move', data)
 
 @sio.event
