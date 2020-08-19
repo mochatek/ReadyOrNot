@@ -83,6 +83,22 @@ def setupNetwork(io):
         game.msg = "Can't connect with server. Try again later."
 
     @sio.event
+    def door(data):
+        pid, door_id = data['door']
+        door = list(filter(lambda d:d.properties['id'] == door_id, game.door_list))[0]
+        if door.properties['locked'] == 0:
+            door.properties['locked'] = 1
+            game.block_list.append(door)
+            if pid == game.player.id:
+                game.info = 'You Locked the door.'
+        else:
+            door.properties['locked'] = 0
+            game.block_list.remove(door)
+            if pid == game.player.id:
+                game.info = 'You Opened the door.'
+
+
+    @sio.event
     def gameStat(data):
         if data.get('start', -1) != -1:
             items = data['start']
@@ -268,7 +284,7 @@ class GameView(arcade.View):
 
         self.item_list = arcade.SpriteList()
         self.load_items()
-        id = 14
+        id = 6
         for item in items:
             item_code, position = item
             self.item_list.append(Item(id, position, item_code))
@@ -349,17 +365,17 @@ class GameView(arcade.View):
         self.item_list.append(Item(0, (400,82), 'YELLOW'))
         self.item_list.append(Item(1, (620, 82), 'RED'))
         self.item_list.append(Item(2, (110, 370), 'BLUE'))
-        self.item_list.append(Item(3, (400, 495), 'BLUE'))
-        self.item_list.append(Item(4, (95, 675), 'GREEN'))
-        self.item_list.append(Item(5, (815, 690), 'GREEN'))
-        self.item_list.append(Item(6, (80, 305), 'K'))
-        self.item_list.append(Item(7, (205, 305), 'K'))
-        self.item_list.append(Item(8, (820, 305), 'K'))
-        self.item_list.append(Item(9, (940, 305), 'K'))
-        self.item_list.append(Item(10, (910, 585), 'G'))
-        self.item_list.append(Item(11, (970, 555), 'G'))
-        self.item_list.append(Item(12, (110, 585), 'G'))
-        self.item_list.append(Item(13, (60, 585), 'G'))
+        self.item_list.append(Item(2, (400, 495), 'BLUE'))
+        self.item_list.append(Item(3, (95, 675), 'GREEN'))
+        self.item_list.append(Item(3, (815, 690), 'GREEN'))
+        self.item_list.append(Item(4, (80, 305), 'K'))
+        self.item_list.append(Item(4, (205, 305), 'K'))
+        self.item_list.append(Item(4, (820, 305), 'K'))
+        self.item_list.append(Item(4, (940, 305), 'K'))
+        self.item_list.append(Item(5, (910, 585), 'G'))
+        self.item_list.append(Item(5, (970, 555), 'G'))
+        self.item_list.append(Item(5, (110, 585), 'G'))
+        self.item_list.append(Item(5, (60, 585), 'G'))
 
     # Scrolling screen according to player movement.
     def scroll_screen(self):
@@ -408,7 +424,7 @@ class GameView(arcade.View):
             self.io.emit('move', {'move': (self.player.position, -1)})
 
 
-        elif symbol == arcade.key.F:
+        elif symbol == arcade.key.CAPSLOCK:
             inventory = len(self.player.items)
             if inventory < BAG_CAPACITY:
                 items = arcade.check_for_collision_with_list(self.player, self.item_list)
@@ -431,12 +447,22 @@ class GameView(arcade.View):
                 self.info = 'Your inventory is ful1 ! [ MAX: 4 items ]'
 
 
-        elif symbol == arcade.key.E:
+        elif symbol == arcade.key.F:
             if len(self.player.items) == 0:
                 self.info = 'Your inventory is empty !'
             else:
                 drop = self.player.items[-1]
                 self.io.emit('item', {'item': (self.player.id, [drop], 0, self.player.position)})
+
+
+        elif symbol == arcade.key.E:
+            doors = arcade.check_for_collision_with_list(self.player, self.door_list)
+            if len(doors) > 0:
+                key = list(filter(lambda i:i.code == doors[0].properties['key'], self.item_list))[0]
+                if key.id in self.player.items:
+                    self.io.emit('door', {'door': (self.player.id, doors[0].properties['id'])})
+                else:
+                    self.info = 'You need {} to access this door.'.format(key.name)
 
 
 def main():

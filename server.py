@@ -50,6 +50,10 @@ def item(sid, data):
     sio.emit('item', data)
 
 @sio.event
+def door(sid, data):
+    sio.emit('door', data)
+
+@sio.event
 def join(sid, data):
     name, team =  data
     players[sid] = {

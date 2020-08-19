@@ -22,6 +22,7 @@ class Item(Sprite):
         super().__init__('res\Items\{}.png'.format(item_dict[item][0]))
 
         self.id = ID
+        self.code = item
         self.scale = ITEM_SCALE
         self.position = pos
         self.name = item_dict[item][1]
