@@ -55,15 +55,21 @@ def setupNetwork(io):
 
         for id in item_ids:
             item = list(filter(lambda i: i.id == id, game.item_list))[0]
+            item.position = position
             item.taken = status
-            if status == 0:
-                item.position = position
+            if status == 0 and pid == game.player.id:
                 game.player.items.pop(game.player.items.index(id))
                 action = 'dropped'
-            else:
-                action = 'picked up'
+                names.append(item.name)
+                if len(game.player.items) == 0:
+                    game.player.cur_item = -1
+            elif status == 1 and pid == game.player.id:
                 game.player.items.append(id)
-            names.append(item.name)
+                action = 'picked up'
+                names.append(item.name)
+                if len(game.player.items) == 1:
+                    game.player.cur_item = 0
+
 
         if pid == game.player.id:
             game.player.position = position
@@ -118,19 +124,22 @@ def setupNetwork(io):
 
     @sio.event
     def status(data):
-        while 1:
-            if game.joined == True:
-                pid, stat = data['player']
-                if pid == game.player.id:
-                    game.player.status = stat
-                    game.statusText = 'Waiting for other players ...'
-                else:
-                    player = list(filter(lambda p: p.id == pid, game.others))[0]
-                    if stat != 0:
-                        player.status = stat
+        try:
+            while 1:
+                if game.joined == True:
+                    pid, stat = data['player']
+                    if pid == game.player.id:
+                        game.player.status = stat
+                        game.statusText = 'Waiting for other players ...'
                     else:
-                        game.others.remove(player)
-                break
+                        player = list(filter(lambda p: p.id == pid, game.others))[0]
+                        if stat != 0:
+                            player.status = stat
+                        else:
+                            game.others.remove(player)
+                    break
+        except:
+            pass
 
 
     @sio.event
@@ -297,7 +306,7 @@ class GameView(arcade.View):
 
         self.item_list = arcade.SpriteList()
         self.load_items()
-        id = 6
+        id = 14
         for item in items:
             item_code, position = item
             self.item_list.append(Item(id, position, item_code))
@@ -321,7 +330,10 @@ class GameView(arcade.View):
 
         #self.floor_list.draw()
         arcade.draw_lrwh_rectangle_textured(0, 0, 1024, 832, self.bg)
-        self.block_list.draw()
+        try:
+            self.block_list.draw()
+        except:
+            pass
 
         self.jail_list.draw()
         self.item_list.draw()
@@ -380,17 +392,17 @@ class GameView(arcade.View):
         self.item_list.append(Item(0, (400,82), 'YELLOW'))
         self.item_list.append(Item(1, (620, 82), 'RED'))
         self.item_list.append(Item(2, (110, 370), 'BLUE'))
-        self.item_list.append(Item(2, (400, 495), 'BLUE'))
-        self.item_list.append(Item(3, (95, 675), 'GREEN'))
-        self.item_list.append(Item(3, (815, 690), 'GREEN'))
-        self.item_list.append(Item(4, (80, 305), 'K'))
-        self.item_list.append(Item(4, (205, 305), 'K'))
-        self.item_list.append(Item(4, (820, 305), 'K'))
-        self.item_list.append(Item(4, (940, 305), 'K'))
-        self.item_list.append(Item(5, (910, 585), 'G'))
-        self.item_list.append(Item(5, (970, 555), 'G'))
-        self.item_list.append(Item(5, (110, 585), 'G'))
-        self.item_list.append(Item(5, (60, 585), 'G'))
+        self.item_list.append(Item(3, (400, 495), 'BLUE'))
+        self.item_list.append(Item(4, (95, 675), 'GREEN'))
+        self.item_list.append(Item(5, (815, 690), 'GREEN'))
+        self.item_list.append(Item(6, (80, 305), 'K'))
+        self.item_list.append(Item(7, (205, 305), 'K'))
+        self.item_list.append(Item(8, (820, 305), 'K'))
+        self.item_list.append(Item(9, (940, 305), 'K'))
+        self.item_list.append(Item(10, (910, 585), 'G'))
+        self.item_list.append(Item(11, (970, 555), 'G'))
+        self.item_list.append(Item(12, (110, 585), 'G'))
+        self.item_list.append(Item(13, (60, 585), 'G'))
 
     # Scrolling screen according to player movement.
     def scroll_screen(self):
@@ -447,7 +459,8 @@ class GameView(arcade.View):
                     if len(items) > 0:
                         for item in items:
                             if inventory < BAG_CAPACITY:
-                                if item.id not in self.player.items:
+                                item_ids = list(map(lambda i: i.id, filter(lambda i: i.code == item.code, game.item_list)))
+                                if not any(id in item_ids for id in self.player.items):
                                     pickups.append(item.id)
                                     inventory += 1
                                 else:
@@ -471,11 +484,11 @@ class GameView(arcade.View):
         elif symbol == arcade.key.E:
             doors = arcade.check_for_collision_with_list(self.player, self.door_list)
             if len(doors) > 0:
-                key = list(filter(lambda i:i.code == doors[0].properties['key'], self.item_list))[0]
-                if key.id in self.player.items:
+                keys = list(map(lambda i: i.id, filter(lambda i: i.code == doors[0].properties['key'], self.item_list)))
+                if any(id in self.player.items for id in keys):
                     self.io.emit('door', {'door': (self.player.id, doors[0].properties['id'])})
                 else:
-                    self.info = 'You need {} to access this door.'.format(key.name)
+                    self.info = 'You need {} to access this door.'.format(keys[0].name)
 
 
 def main():
