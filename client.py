@@ -438,6 +438,21 @@ class GameView(arcade.View):
             arcade.set_viewport(self.view_left, self.view_left + SCREEN_WIDTH, self.view_bottom, self.view_bottom + SCREEN_HEIGHT)
 
 
+    def on_mouse_scroll(self, x, y, scroll_x, scroll_y):
+        # Check if player has anything in his inventory.
+        if self.player.cur_item != -1:
+            inventory = len(self.player.items)
+            # Switch between weapons.
+            if scroll_y == 1:
+                self.player.cur_item = (self.player.cur_item + 1) % inventory
+            elif scroll_y == -1:
+                self.player.cur_item = (self.player.cur_item - 1 + inventory) % inventory
+
+            # Show game message of weapon switch.
+            item = list(filter(lambda i: i.id == self.player.items[self.player.cur_item], self.item_list))[0]
+            self.info = "You switched to {}".format(item.name)
+
+
     def on_key_press(self, symbol, modifiers):
         if symbol == arcade.key.D and self.player.change_x != SPEED:
             self.io.emit('move', {'move': (self.player.id, self.player.position, 3)})
