@@ -1,5 +1,7 @@
 import socketio
 
+from sys import argv
+
 from _thread import start_new_thread
 from textwrap import wrap
 
@@ -19,8 +21,8 @@ BAG_CAPACITY = 4
 game = None
 
 def setupNetwork(io):
-    sio = io
     global game
+    sio = io
 
     @sio.event
     def connect():
@@ -30,51 +32,60 @@ def setupNetwork(io):
 
     @sio.event
     def init(data):
-        id, name, life, tex, team, stat, pos = data['you']
-        game.player = Player(id, name, life, tex, team, stat, pos)
+        pid, name, life, tex, team, stat, pos = data['you']
+        game.player = Player(pid, name, life, tex, team, stat, pos)
 
         for player in data['others']:
-            id, name, life, tex, team, stat, pos = player
-            game.others.append(Player(id, name, life, tex, team, stat, pos))
+            pid, name, life, tex, team, stat, pos = player
+            game.others.append(Player(pid, name, life, tex, team, stat, pos))
         game.joined = True
 
 
     @sio.event
     def newPlr(data):
-        id, name, life, tex, team, stat, pos = data['player']
-        game.others.append(Player(id, name, life, tex, team, stat, pos))
+        pid, name, life, tex, team, stat, pos = data['player']
+        game.others.append(Player(pid, name, life, tex, team, stat, pos))
 
     @sio.event
     def item(data):
-        pid = data['item'][0]
-        action = 'picked up'
-        item_ids = data['item'][1]
-        status = data['item'][2]
+        pid, item_ids, status, position = data['item']
+
         names = []
+        action = None
+
         for id in item_ids:
             item = list(filter(lambda i: i.id == id, game.item_list))[0]
             item.taken = status
-            if len(data['item']) == 4:
-                item.position = data['item'][3]
+            if status == 0:
+                item.position = position
                 game.player.items.pop(game.player.items.index(id))
                 action = 'dropped'
             else:
+                action = 'picked up'
                 game.player.items.append(id)
             names.append(item.name)
+
         if pid == game.player.id:
-            names = ', '.join(names)
-            names = wrap(names, 40)
-            game.info = 'You {} {}'.format(action, '\n'.join(names))
+            game.player.position = position
+            game.player.change_x, game.player.change_y = 0, 0
+            if names:
+                names = ', '.join(names)
+                names = wrap(names, 40)
+                game.info = 'You {} {}'.format(action, '\n'.join(names))
+        else:
+            player = list(filter(lambda p: p.id == pid, game.others))[0]
+            player.position = position
+            player.change_x, player.change_y = 0, 0
 
     @sio.event
     def move(data):
-        sid, position, direction = data['player']
-        speed = {-1: (0, 0), 0: (0, SPEED), 1: (0, -SPEED), 2: (-SPEED, 0), 3: (SPEED, 0)}
-        if game.player.id == sid:
+        pid, position, direction = data['move']
+        speed = {0: (0, SPEED), 1: (0, -SPEED), 2: (-SPEED, 0), 3: (SPEED, 0)}
+        if game.player.id == pid:
             game.position = position
             game.player.change_x, game.player.change_y = speed[direction]
         else:
-            player = list(filter(lambda p: p.id == sid, game.others))[0]
+            player = list(filter(lambda p: p.id == pid, game.others))[0]
             player.position = position
             player.change_x, player.change_y = speed[direction]
 
@@ -109,12 +120,12 @@ def setupNetwork(io):
     def status(data):
         while 1:
             if game.joined == True:
-                sid, stat = data['player']
-                if sid == game.player.id:
+                pid, stat = data['player']
+                if pid == game.player.id:
                     game.player.status = stat
                     game.statusText = 'Waiting for other players ...'
                 else:
-                    player = list(filter(lambda p: p.id == sid, game.others))[0]
+                    player = list(filter(lambda p: p.id == pid, game.others))[0]
                     if stat != 0:
                         player.status = stat
                     else:
@@ -140,6 +151,7 @@ class ScreenView(arcade.View):
         super().__init__()
         global game
         game = self
+        self.io = None
         self.msg = msg
         self.bg = arcade.load_texture('res\screen.png')
         self.team = -1
@@ -165,7 +177,7 @@ class ScreenView(arcade.View):
             elif 249 <= x <= 294:
                 self.team = 1
 
-        if self.team != -1:
+        if self.team != -1 and not self.io:
             self.msg = 'Trying to connect with server. Please wait.'
             self.io = socketio.Client()
             start_new_thread(setupNetwork, (self.io, ))
@@ -205,7 +217,8 @@ class LobbyView(arcade.View):
         self.item_list = arcade.SpriteList()
 
         # Request join.
-        self.io.emit('join', ['mocha', team])
+        name = argv[1]
+        self.io.emit('join', [name, team])
 
         # Message to be displayed below. (It is based on the game status)
         self.statusText = "Press R to Ready .."
@@ -290,9 +303,10 @@ class GameView(arcade.View):
             self.item_list.append(Item(id, position, item_code))
             id += 1
 
-        self.task = {0: "Theives inside. Catch everyone.", 1: "Loot Everything you can. (Be ware of Guards)"}
+        task = {0: "Theives inside. Catch everyone.", 1: "Loot Everything you can. (Be ware of Guards)"}
         # Set initial game message.
-        self.info = self.task[self.player.team]
+        self.info = task[self.player.team]
+        self.prevInfo = self.info
         # Initialize Aiming control.
         self.aim = Aim(self.player.position)
         # Physics engine for the game.
@@ -346,17 +360,18 @@ class GameView(arcade.View):
         self.others.update()
         self.item_list.update()
 
+        if self.info.startswith('You'):
+            self.prevInfo = self.info
+
         items = arcade.check_for_collision_with_list(self.player, self.item_list)
         if items:
-            items = list(filter(lambda i: not i.taken, items))
+            items = list(filter(lambda i: not i.taken and i.id not in self.player.items, items))
             if len(items) > 0:
                 self.info = items[0].info
             else:
-                if not self.info.startswith('You'):
-                    self.info = self.task[self.player.team]
+                self.info = self.prevInfo
         else:
-            if not self.info.startswith('You'):
-                self.info = self.task[self.player.team]
+            self.info = self.prevInfo
 
         # Update Viewport based on player movement.
         self.scroll_screen()
@@ -413,25 +428,23 @@ class GameView(arcade.View):
 
     def on_key_press(self, symbol, modifiers):
         if symbol == arcade.key.D and self.player.change_x != SPEED:
-            self.io.emit('move', {'move': (self.player.position, 3)})
+            self.io.emit('move', {'move': (self.player.id, self.player.position, 3)})
         elif symbol == arcade.key.A and self.player.change_x != -SPEED:
-            self.io.emit('move', {'move': (self.player.position, 2)})
+            self.io.emit('move', {'move': (self.player.id, self.player.position, 2)})
         elif symbol == arcade.key.W and self.player.change_y != SPEED:
-            self.io.emit('move', {'move': (self.player.position, 0)})
+            self.io.emit('move', {'move': (self.player.id, self.player.position, 0)})
         elif symbol == arcade.key.S and self.player.change_y != -SPEED:
-            self.io.emit('move', {'move': (self.player.position, 1)})
-        elif symbol == arcade.key.SPACE and (self.player.change_x + self.player.change_y) != 0:
-            self.io.emit('move', {'move': (self.player.position, -1)})
+            self.io.emit('move', {'move': (self.player.id, self.player.position, 1)})
 
 
-        elif symbol == arcade.key.CAPSLOCK:
+        elif symbol == arcade.key.SPACE:
+            pickups = []
             inventory = len(self.player.items)
             if inventory < BAG_CAPACITY:
                 items = arcade.check_for_collision_with_list(self.player, self.item_list)
                 if items:
                     items = list(filter(lambda i: not i.taken, items))
                     if len(items) > 0:
-                        pickups = []
                         for item in items:
                             if inventory < BAG_CAPACITY:
                                 if item.id not in self.player.items:
@@ -441,10 +454,10 @@ class GameView(arcade.View):
                                     self.info = "You already have it with you. Can't pick up again !"
                             else:
                                 self.info = 'Your inventory is full ! [ MAX: 4 items ]'
-
-                        self.io.emit('item', {'item': (self.player.id, pickups, 1)})
             else:
-                self.info = 'Your inventory is ful1 ! [ MAX: 4 items ]'
+                self.info = 'Your inventory is full ! [ MAX: 4 items ]'
+            if (self.player.change_x + self.player.change_y) != 0 or pickups:
+                self.io.emit('item', {'item': (self.player.id, pickups, 1, self.player.position)})
 
 
         elif symbol == arcade.key.F:

@@ -41,8 +41,6 @@ def ready(sid):
 
 @sio.event
 def move(sid, data):
-    position, direction = data['move']
-    data = {'player': (sid, position, direction)}
     sio.emit('move', data)
 
 @sio.event
