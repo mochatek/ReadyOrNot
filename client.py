@@ -18,150 +18,16 @@ SPEED = 0.75
 MARGIN = 160
 BAG_CAPACITY = 4
 
-game = None
-
-def setupNetwork(io):
-    global game
-    sio = io
-
-    @sio.event
-    def connect():
-        print('connected')
-        view = LobbyView(game.team, sio)
-        game.window.show_view(view)
-
-    @sio.event
-    def init(data):
-        pid, name, life, tex, team, stat, pos = data['you']
-        game.player = Player(pid, name, life, tex, team, stat, pos)
-
-        for player in data['others']:
-            pid, name, life, tex, team, stat, pos = player
-            game.others.append(Player(pid, name, life, tex, team, stat, pos))
-        game.joined = True
-
-
-    @sio.event
-    def newPlr(data):
-        pid, name, life, tex, team, stat, pos = data['player']
-        game.others.append(Player(pid, name, life, tex, team, stat, pos))
-
-    @sio.event
-    def item(data):
-        pid, item_ids, status, position = data['item']
-
-        names = []
-        action = None
-
-        for id in item_ids:
-            item = list(filter(lambda i: i.id == id, game.item_list))[0]
-            item.position = position
-            item.taken = status
-            if status == 0 and pid == game.player.id:
-                game.player.items.pop(game.player.items.index(id))
-                action = 'dropped'
-                names.append(item.name)
-                if len(game.player.items) == 0:
-                    game.player.cur_item = -1
-            elif status == 1 and pid == game.player.id:
-                game.player.items.append(id)
-                action = 'picked up'
-                names.append(item.name)
-                if len(game.player.items) == 1:
-                    game.player.cur_item = 0
-
-
-        if pid == game.player.id:
-            game.player.position = position
-            game.player.change_x, game.player.change_y = 0, 0
-            if names:
-                names = ', '.join(names)
-                names = wrap(names, 40)
-                game.info = 'You {} {}'.format(action, '\n'.join(names))
-        else:
-            player = list(filter(lambda p: p.id == pid, game.others))[0]
-            player.position = position
-            player.change_x, player.change_y = 0, 0
-
-    @sio.event
-    def move(data):
-        pid, position, direction = data['move']
-        speed = {0: (0, SPEED), 1: (0, -SPEED), 2: (-SPEED, 0), 3: (SPEED, 0)}
-        if game.player.id == pid:
-            game.position = position
-            game.player.change_x, game.player.change_y = speed[direction]
-        else:
-            player = list(filter(lambda p: p.id == pid, game.others))[0]
-            player.position = position
-            player.change_x, player.change_y = speed[direction]
-
-    @sio.event
-    def connect_error(err):
-        game.msg = "Can't connect with server. Try again later."
-
-    @sio.event
-    def door(data):
-        pid, door_id = data['door']
-        door = list(filter(lambda d:d.properties['id'] == door_id, game.door_list))[0]
-        if door.properties['locked'] == 0:
-            door.properties['locked'] = 1
-            game.block_list.append(door)
-            if pid == game.player.id:
-                game.info = 'You Locked the door.'
-        else:
-            door.properties['locked'] = 0
-            game.block_list.remove(door)
-            if pid == game.player.id:
-                game.info = 'You Opened the door.'
-
-
-    @sio.event
-    def gameStat(data):
-        if data.get('start', -1) != -1:
-            items = data['start']
-            view = GameView(game.io, game.player, game.others, items)
-            game.window.show_view(view)
-
-    @sio.event
-    def status(data):
-        while 1:
-            if game.joined == True:
-                pid, stat = data['player']
-                if pid == game.player.id:
-                    game.player.status = stat
-                    game.statusText = 'Waiting for other players ...'
-                else:
-                    player = list(filter(lambda p: p.id == pid, game.others))[0]
-                    player.status = stat
-                break
-
-
-    @sio.event
-    def disconnect(pid):
-        if pid == game.player.id:
-            print('disconnected')
-            msg = "Disconnected from server. Please connect again."
-            view = ScreenView(msg)
-            game.window.show_view(view)
-        else:
-            player = list(filter(lambda p: p.id == pid, game.others))[0]
-            game.others.remove(player)
-
-    try:
-        sio.connect('http://localhost:5000')
-    except:
-        game.msg = "Can't connect with server. Try again later."
-
 # Initail game screen.
 class ScreenView(arcade.View):
-    def __init__(self, msg=None):
+    def __init__(self, io, msg=None):
         super().__init__()
         global game
-        game = self
-        self.io = None
+        self.io = io
         self.msg = msg
         self.bg = arcade.load_texture('res\screen.png')
         self.team = -1
+        self.lock = False
 
     def on_draw(self):
         arcade.start_render()
@@ -174,7 +40,7 @@ class ScreenView(arcade.View):
         # If player pressed setting button, show info.
         if 374 <= y <= 390 and 373 <= x <= 389:
             # Show settings and other info.
-            view = InfoView()
+            view = InfoView(self.io)
             self.window.show_view(view)
 
         # Find team chosen by player.
@@ -184,19 +50,24 @@ class ScreenView(arcade.View):
             elif 249 <= x <= 294:
                 self.team = 1
 
-        if self.team != -1 and not self.io:
+        if self.team != -1 and not self.lock:
             self.msg = 'Trying to connect with server. Please wait.'
-            self.io = socketio.Client()
-            start_new_thread(setupNetwork, (self.io, ))
-
+            global game
+            game = self
+            try:
+                self.io.connect('http://localhost:5000')
+            except:
+                msg = "Can't connect with server. Try again later."
+                self.lock = False
 
 
 
 # Settings and Credits.
 class InfoView(arcade.View):
-    def __init__(self):
+    def __init__(self, io):
         super().__init__()
         self.bg = arcade.load_texture('res\info.png')
+        self.io = io
 
     def on_draw(self):
         arcade.start_render()
@@ -205,7 +76,7 @@ class InfoView(arcade.View):
     def on_key_press(self, symbol, modifiers):
         # Switch back to Load screen.
         if symbol == arcade.key.ESCAPE:
-            view = ScreenView()
+            view = ScreenView(self.io)
             self.window.show_view(view)
 
 
@@ -255,17 +126,16 @@ class LobbyView(arcade.View):
                     arcade.Sprite('res\Players\inactive.png', 1, center_x=120, center_y=y).draw()
                     arcade.draw_text("Searching...", 200, y-12, arcade.color.WHITE_SMOKE, 12, bold=True)
                 else:
-                    try:
-                        file = self.others[i].file
-                        arcade.Sprite(file, 1, center_x=120, center_y=y).draw()
-                        arcade.draw_text(self.others[i].name, 200, y-10, color[self.others[i].status], 12, bold=True)
-                    except:
-                        pass
+                    file = self.others[i].file
+                    arcade.Sprite(file, 1, center_x=120, center_y=y).draw()
+                    arcade.draw_text(self.others[i].name, 200, y-10, color[self.others[i].status], 12, bold=True)
+
 
 
     def on_mouse_press(self, x, y, button, modifiers):
     # Go back to screen view.
         if 364 <= x <= 386 and  13 <= y <= 31:
+            # self.io.emit('disconnect', self.player.id)
             self.io.disconnect()
 
     def on_key_press(self, key, modifiers):
@@ -280,6 +150,7 @@ class GameView(arcade.View):
         global game
         game =  self
         self.io = io
+        self.joined = True
         self.view_left = 0
         self.view_bottom = 0
         self.bg = arcade.load_texture('res\BG.png')
@@ -509,11 +380,145 @@ class GameView(arcade.View):
 
 def main():
     global game
+    sio = socketio.Client()
+
+    @sio.event
+    def connect():
+        print('connected')
+        if game:
+            game.lock = True
+            view = LobbyView(game.team, sio)
+            game.window.show_view(view)
+
+    @sio.event
+    def init(data):
+        if game:
+            pid, name, life, tex, team, stat, pos = data['you']
+            game.player = Player(pid, name, life, tex, team, stat, pos)
+
+            for player in data['others']:
+                pid, name, life, tex, team, stat, pos = player
+                game.others.append(Player(pid, name, life, tex, team, stat, pos))
+            game.joined = True
+
+
+    @sio.event
+    def newPlr(data):
+        if game:
+            pid, name, life, tex, team, stat, pos = data['player']
+            game.others.append(Player(pid, name, life, tex, team, stat, pos))
+
+    @sio.event
+    def item(data):
+        if game:
+            pid, item_ids, status, position = data['item']
+
+            names = []
+            action = None
+
+            for id in item_ids:
+                item = list(filter(lambda i: i.id == id, game.item_list))[0]
+                item.position = position
+                item.taken = status
+                if status == 0 and pid == game.player.id:
+                    game.player.items.pop(game.player.items.index(id))
+                    action = 'dropped'
+                    names.append(item.name)
+                    if len(game.player.items) == 0:
+                        game.player.cur_item = -1
+                elif status == 1 and pid == game.player.id:
+                    game.player.items.append(id)
+                    action = 'picked up'
+                    names.append(item.name)
+                    if len(game.player.items) == 1:
+                        game.player.cur_item = 0
+
+
+            if pid == game.player.id:
+                game.player.position = position
+                game.player.change_x, game.player.change_y = 0, 0
+                if names:
+                    names = ', '.join(names)
+                    names = wrap(names, 40)
+                    game.info = 'You {} {}'.format(action, '\n'.join(names))
+            else:
+                player = list(filter(lambda p: p.id == pid, game.others))[0]
+                player.position = position
+                player.change_x, player.change_y = 0, 0
+
+    @sio.event
+    def move(data):
+        if game:
+            pid, position, direction = data['move']
+            speed = {0: (0, SPEED), 1: (0, -SPEED), 2: (-SPEED, 0), 3: (SPEED, 0)}
+            if game.player.id == pid:
+                game.position = position
+                game.player.change_x, game.player.change_y = speed[direction]
+            else:
+                player = list(filter(lambda p: p.id == pid, game.others))[0]
+                player.position = position
+                player.change_x, player.change_y = speed[direction]
+
+    @sio.event
+    def connect_error(err):
+        if game:
+            game.msg = "Can't connect with server. Try again later."
+
+    @sio.event
+    def door(data):
+        if game:
+            pid, door_id = data['door']
+            door = list(filter(lambda d:d.properties['id'] == door_id, game.door_list))[0]
+            if door.properties['locked'] == 0:
+                door.properties['locked'] = 1
+                game.block_list.append(door)
+                if pid == game.player.id:
+                    game.info = 'You Locked the door.'
+            else:
+                door.properties['locked'] = 0
+                game.block_list.remove(door)
+                if pid == game.player.id:
+                    game.info = 'You Opened the door.'
+
+
+    @sio.event
+    def gameStat(data):
+        if game:
+            if data.get('start', -1) != -1:
+                items = data['start']
+                view = GameView(game.io, game.player, game.others, items)
+                game.window.show_view(view)
+
+    @sio.event
+    def status(data):
+        if game:
+            while 1:
+                if game.joined == True:
+                    pid, stat = data['player']
+                    if pid == game.player.id:
+                        game.player.status = stat
+                        game.statusText = 'Waiting for other players ...'
+                    else:
+                        player = list(filter(lambda p: p.id == pid, game.others))[0]
+                        player.status = stat
+                        if stat == 0:
+                            game.others.remove(player)
+                    break
+
+    @sio.event
+    def disconnect():
+        if game:
+            print('disconnected')
+            msg = "Disconnected from server. Please connect again."
+            view = ScreenView(sio, msg)
+            game.window.show_view(view)
+
     window = arcade.Window(SCREEN_WIDTH, SCREEN_HEIGHT, TITLE)
     # Show initial game load screen.
-    view = ScreenView()
+    view = ScreenView(sio)
     window.show_view(view)
     arcade.run()
+    sio.disconnect()
 
 
 
