@@ -124,30 +124,28 @@ def setupNetwork(io):
 
     @sio.event
     def status(data):
-        try:
-            while 1:
-                if game.joined == True:
-                    pid, stat = data['player']
-                    if pid == game.player.id:
-                        game.player.status = stat
-                        game.statusText = 'Waiting for other players ...'
-                    else:
-                        player = list(filter(lambda p: p.id == pid, game.others))[0]
-                        if stat != 0:
-                            player.status = stat
-                        else:
-                            game.others.remove(player)
-                    break
-        except:
-            pass
+        while 1:
+            if game.joined == True:
+                pid, stat = data['player']
+                if pid == game.player.id:
+                    game.player.status = stat
+                    game.statusText = 'Waiting for other players ...'
+                else:
+                    player = list(filter(lambda p: p.id == pid, game.others))[0]
+                    player.status = stat
+                break
 
 
     @sio.event
-    def disconnect():
-        print('disconnected')
-        msg = "Disconnected from server. Please connect again."
-        view = ScreenView(msg)
-        game.window.show_view(view)
+    def disconnect(pid):
+        if pid == game.player.id:
+            print('disconnected')
+            msg = "Disconnected from server. Please connect again."
+            view = ScreenView(msg)
+            game.window.show_view(view)
+        else:
+            player = list(filter(lambda p: p.id == pid, game.others))[0]
+            game.others.remove(player)
 
     try:
         sio.connect('http://localhost:5000')
@@ -257,9 +255,12 @@ class LobbyView(arcade.View):
                     arcade.Sprite('res\Players\inactive.png', 1, center_x=120, center_y=y).draw()
                     arcade.draw_text("Searching...", 200, y-12, arcade.color.WHITE_SMOKE, 12, bold=True)
                 else:
-                    file = self.others[i].file
-                    arcade.Sprite(file, 1, center_x=120, center_y=y).draw()
-                    arcade.draw_text(self.others[i].name, 200, y-10, color[self.others[i].status], 12, bold=True)
+                    try:
+                        file = self.others[i].file
+                        arcade.Sprite(file, 1, center_x=120, center_y=y).draw()
+                        arcade.draw_text(self.others[i].name, 200, y-10, color[self.others[i].status], 12, bold=True)
+                    except:
+                        pass
 
 
     def on_mouse_press(self, x, y, button, modifiers):
@@ -507,11 +508,13 @@ class GameView(arcade.View):
 
 
 def main():
+    global game
     window = arcade.Window(SCREEN_WIDTH, SCREEN_HEIGHT, TITLE)
     # Show initial game load screen.
     view = ScreenView()
     window.show_view(view)
     arcade.run()
+
 
 
 if __name__ == '__main__':
