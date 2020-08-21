@@ -45,6 +45,13 @@ def move(sid, data):
 
 @sio.event
 def item(sid, data):
+    items = data['item'][1]
+    status = data['item'][2]
+    for item in items:
+        if status == 0:
+            players[sid]['items'].pop(players[sid]['items'].index(item))
+        else:
+            players[sid]['items'].append(item)
     sio.emit('item', data)
 
 @sio.event
@@ -52,22 +59,33 @@ def door(sid, data):
     sio.emit('door', data)
 
 @sio.event
+def attack(sid, data):
+    hits = []
+    for player in data['hits']:
+        pid, pos, damage = player
+        players[pid]['life'] = max(0, players[pid]['life'] - damage)
+        if players[pid]['life'] == 0:
+            sio.emit('jail', {'jail': (pid, pos, players[pid]['items'])})
+        else:
+            hits.append((pid, players[pid]['life']))
+    sio.emit('attack', {'hits': hits})
+
+@sio.event
 def join(sid, data):
     name, team =  data
     players[sid] = {
         'id': sid,
         'name': name,
-        'life': 1,
-        'tex': 0,
         'team': team,
+        'pos': pos[0][0],
         'status': 1,
-        # 'pos': choice(pos[team])
-        'pos': pos[0][0]
+        'life': 1,
+        'items': []
     }
-    new = tuple(players[sid].values())
+    new = tuple(players[sid].values())[:4]
     data = {
         'you': new,
-        'others': tuple(map(lambda id:tuple(players[id].values()) ,list(filter(lambda id: id != sid, players))))
+        'others': tuple(map(lambda id:tuple(players[id].values())[:4], filter(lambda id: id != sid, players)))
     }
     sio.emit('init', data, to=sid) #send other players data to joined player
 

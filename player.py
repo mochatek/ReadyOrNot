@@ -4,7 +4,7 @@ from arcade import load_texture
 PLAYER_SCALE  = 0.45
 
 class Player(Sprite):
-    def __init__(self, ID, name, life, tex, team, stat, pos):
+    def __init__(self, ID, name, team, pos):
         if team == 0:
             file = 'res\Players\Cop'
         else:
@@ -16,11 +16,11 @@ class Player(Sprite):
 
         self.id = ID
         self.name = name
+        self.team = team
         self.position  = pos
         self.angle = 0
-        self.status = stat
-        self.life = life
-        self.team = team
+        self.status = 1
+        self.life = 1
         self.items = []
         self.cur_item = -1
         self.in_jail = False

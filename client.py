@@ -257,8 +257,10 @@ class GameView(arcade.View):
             self.aim.position = dir_dict[direction]
             if arcade.has_line_of_sight(self.player.position, self.aim.position, self.block_list):
                 self.aim.set_texture(0)
+                self.aim.cur_texture_index = 0
             else:
                 self.aim.set_texture(1)
+                self.aim.cur_texture_index = 1
 
 
         if self.info.startswith('You'):
@@ -267,7 +269,7 @@ class GameView(arcade.View):
         items = arcade.check_for_collision_with_list(self.player, self.item_list)
         if items:
             items = list(filter(lambda i: not i.taken and i.id not in self.player.items, items))
-            if len(items) > 0:
+            if items:
                 self.info = items[0].info
             else:
                 self.info = self.prevInfo
@@ -325,6 +327,15 @@ class GameView(arcade.View):
         self.view_bottom = int(self.view_bottom)
         if changed == True:
             arcade.set_viewport(self.view_left, self.view_left + SCREEN_WIDTH, self.view_bottom, self.view_bottom + SCREEN_HEIGHT)
+
+    def on_mouse_press(self, x, y, button, modifiers):
+        if self.aim.toggle and self.aim.cur_texture_index == 0:
+            players_hit = arcade.check_for_collision_with_list(self.aim, self.others)
+            if players_hit:
+                hits = []
+                for player in players_hit:
+                    hits.append((player.id, player.position, self.aim.damage))
+                self.io.emit('attack', {'hits': hits})
 
 
     def on_mouse_scroll(self, x, y, scroll_x, scroll_y):
@@ -393,7 +404,7 @@ class GameView(arcade.View):
 
         elif symbol == arcade.key.E:
             doors = arcade.check_for_collision_with_list(self.player, self.door_list)
-            if len(doors) > 0:
+            if doors:
                 keys = list(map(lambda i: i.id, filter(lambda i: i.code == doors[0].properties['key'], self.item_list)))
                 if any(id in self.player.items for id in keys):
                     self.io.emit('door', {'door': (self.player.id, doors[0].properties['id'])})
@@ -416,20 +427,40 @@ def main():
     @sio.event
     def init(data):
         if game:
-            pid, name, life, tex, team, stat, pos = data['you']
-            game.player = Player(pid, name, life, tex, team, stat, pos)
+            pid, name, team, pos = data['you']
+            game.player = Player(pid, name, team, pos)
 
             for player in data['others']:
-                pid, name, life, tex, team, stat, pos = player
-                game.others.append(Player(pid, name, life, tex, team, stat, pos))
+                pid, name, team, pos = player
+                game.others.append(Player(pid, name, team, pos))
             game.joined = True
 
 
     @sio.event
     def newPlr(data):
         if game:
-            pid, name, life, tex, team, stat, pos = data['player']
-            game.others.append(Player(pid, name, life, tex, team, stat, pos))
+            pid, name, team, pos = data['player']
+            game.others.append(Player(pid, name, team, pos))
+
+    @sio.event
+    def attack(data):
+        if game:
+            for player in data['hits']:
+                pid, life = player
+                if game.player.id == pid:
+                    game.player.life = life
+                else:
+                    player = list(filter(lambda p: p.id == pid, game.others))[0]
+                    player.life = life
+
+    @sio.event
+    def jail(data):
+        if game:
+            pid, pos, items = data['jail']
+            if pid == game.player.id:
+                print('im in jail')
+            else:
+                print('other one in jail')
 
     @sio.event
     def item(data):
@@ -471,7 +502,6 @@ def main():
                             game.aim.toggle = False
                     else:
                             game.aim.toggle = False
-
 
             if pid == game.player.id:
                 game.player.position = position
