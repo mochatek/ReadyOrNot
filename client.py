@@ -255,7 +255,10 @@ class GameView(arcade.View):
                 270: (self.player.center_x + self.aim.range * 32, self.player.center_y)
             }
             self.aim.position = dir_dict[direction]
-
+            if arcade.has_line_of_sight(self.player.position, self.aim.position, self.block_list):
+                self.aim.set_texture(0)
+            else:
+                self.aim.set_texture(1)
 
 
         if self.info.startswith('You'):

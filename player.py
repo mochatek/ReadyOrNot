@@ -26,19 +26,14 @@ class Player(Sprite):
         self.in_jail = False
 
     def update(self):
-        # self.set_texture(self.cur_texture_index)
         if self.change_y > 0:
             self.angle = 0
-            # self.direction = 'U'
         elif self.change_y < 0:
             self.angle = 180
-            # self.direction = 'D'
         elif self.change_x > 0:
             self.angle = 270
-            # self.direction = 'R'
         elif self.change_x < 0:
             self.angle = 90
-            # self.direction = 'L'
 
         self.center_x += self.change_x
         self.center_y += self.change_y
