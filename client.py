@@ -247,19 +247,16 @@ class GameView(arcade.View):
         self.others.update()
         self.item_list.update()
 
-        if self.player.cur_item != -1:
-            item = list(filter(lambda i: i.id == self.player.items[self.player.cur_item], self.item_list))[0]
-            if item.code in ['G', 'K']:
-                self.aim.toggle = True
-                if self.aim.range != item.range:
-                    self.aim.position = self.player.position
-                    self.aim.range = item.range
-                    self.aim.damage = item.damage
-                    print(self.aim.range)
-            else:
-                self.aim.toggle = False
-        else:
-            self.aim.toggle = False
+        if self.aim.toggle:
+            direction = self.player.angle
+            dir_dict = {0: (self.player.center_x, self.player.center_y + self.aim.range * 32),
+                180: (self.player.center_x, self.player.center_y - self.aim.range * 32),
+                90: (self.player.center_x - self.aim.range * 32, self.player.center_y ),
+                270: (self.player.center_x + self.aim.range * 32, self.player.center_y)
+            }
+            self.aim.position = dir_dict[direction]
+
+
 
         if self.info.startswith('You'):
             self.prevInfo = self.info
@@ -339,6 +336,12 @@ class GameView(arcade.View):
 
             # Show game message of weapon switch.
             item = list(filter(lambda i: i.id == self.player.items[self.player.cur_item], self.item_list))[0]
+            if item.code in ['G', 'K']:
+                self.aim.toggle = True
+                self.aim.range = item.range
+                self.aim.damage = item.damage
+            else:
+                self.aim.toggle = False
             self.info = "You switched to {}".format(item.name)
 
 
@@ -437,22 +440,34 @@ def main():
                 item = list(filter(lambda i: i.id == id, game.item_list))[0]
                 item.position = position
                 item.taken = status
-                if status == 0 and pid == game.player.id:
-                    game.player.items.pop(game.player.items.index(id))
-                    action = 'dropped'
-                    names.append(item.name)
-                    if len(game.player.items) == 0:
-                        game.player.cur_item = -1
+                if pid == game.player.id:
+                    if status == 0:
+                        game.player.items.pop(game.player.items.index(id))
+                        action = 'dropped'
+                        names.append(item.name)
+                        if len(game.player.items) == 0:
+                            game.player.cur_item = -1
+                        else:
+                            game.player.cur_item = 0
+                    elif status == 1:
+                        game.player.items.append(id)
+                        action = 'picked up'
+                        names.append(item.name)
+                        if len(game.player.items) == 1:
+                            game.player.cur_item = 0
+                        else:
+                            game.player.cur_item = len(game.player.items) - 1
+
+                    if game.player.cur_item != -1:
+                        item = list(filter(lambda i: i.id == game.player.items[game.player.cur_item], game.item_list))[0]
+                        if item.code in ['G', 'K']:
+                            game.aim.toggle = True
+                            game.aim.range = item.range
+                            game.aim.damage = item.damage
+                        else:
+                            game.aim.toggle = False
                     else:
-                        game.player.cur_item = 0
-                elif status == 1 and pid == game.player.id:
-                    game.player.items.append(id)
-                    action = 'picked up'
-                    names.append(item.name)
-                    if len(game.player.items) == 1:
-                        game.player.cur_item = 0
-                    else:
-                        game.player.cur_item = len(game.player.items) - 1
+                            game.aim.toggle = False
 
 
             if pid == game.player.id:
