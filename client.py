@@ -251,9 +251,11 @@ class GameView(arcade.View):
             item = list(filter(lambda i: i.id == self.player.items[self.player.cur_item], self.item_list))[0]
             if item.code in ['G', 'K']:
                 self.aim.toggle = True
-                self.aim.position = self.player.position
-                self.range = item.range
-                self.damage = item.damage
+                if self.aim.range != item.range:
+                    self.aim.position = self.player.position
+                    self.aim.range = item.range
+                    self.aim.damage = item.damage
+                    print(self.aim.range)
             else:
                 self.aim.toggle = False
         else:
