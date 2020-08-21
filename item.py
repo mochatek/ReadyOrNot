@@ -30,7 +30,7 @@ class Item(Sprite):
         if item in ['G', 'K']:
             self.range = item_dict[item][2]
             self.damage = item_dict[item][3]
-            self.info = '[ Range : {} , Damage : -{}% ]'.format(self.range, self.damage * 100)
+            self.info = '{} [Range : {} , Damage : -{}%]'.format(self.name, self.range, self.damage * 100)
         else:
             self.info = '{}: {}'.format(item_dict[item][1], item_dict[item][2])
 

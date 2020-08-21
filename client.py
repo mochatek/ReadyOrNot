@@ -2,7 +2,6 @@ import socketio
 
 from sys import argv
 
-from _thread import start_new_thread
 from textwrap import wrap
 
 import arcade
@@ -34,6 +33,7 @@ class ScreenView(arcade.View):
         arcade.draw_lrwh_rectangle_textured(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, self.bg)
         if self.msg:
             arcade.draw_text(self.msg, 110, 380, arcade.color.ANTIQUE_WHITE, 8, font_name=('Times New Roman'))
+
 
 
     def on_mouse_press(self, x, y, button, modifiers):
@@ -126,9 +126,12 @@ class LobbyView(arcade.View):
                     arcade.Sprite('res\Players\inactive.png', 1, center_x=120, center_y=y).draw()
                     arcade.draw_text("Searching...", 200, y-12, arcade.color.WHITE_SMOKE, 12, bold=True)
                 else:
-                    file = self.others[i].file
-                    arcade.Sprite(file, 1, center_x=120, center_y=y).draw()
-                    arcade.draw_text(self.others[i].name, 200, y-10, color[self.others[i].status], 12, bold=True)
+                    try:
+                        file = self.others[i].file
+                        arcade.Sprite(file, 1, center_x=120, center_y=y).draw()
+                        arcade.draw_text(self.others[i].name, 200, y-10, color[self.others[i].status], 12, bold=True)
+                    except:
+                        pass
 
 
 
@@ -233,7 +236,7 @@ class GameView(arcade.View):
         arcade.draw_text('Loot info here', self.view_left + 70, self.view_bottom + 365, arcade.color.BLUE, 10, bold = True)
 
         # Draw Aim control if player is hoding any weapon.
-        if self.aim.type:
+        if self.aim.toggle:
             self.aim.draw()
 
 
@@ -243,6 +246,18 @@ class GameView(arcade.View):
         self.player_list.update()
         self.others.update()
         self.item_list.update()
+
+        if self.player.cur_item != -1:
+            item = list(filter(lambda i: i.id == self.player.items[self.player.cur_item], self.item_list))[0]
+            if item.code in ['G', 'K']:
+                self.aim.toggle = True
+                self.aim.position = self.player.position
+                self.range = item.range
+                self.damage = item.damage
+            else:
+                self.aim.toggle = False
+        else:
+            self.aim.toggle = False
 
         if self.info.startswith('You'):
             self.prevInfo = self.info
@@ -426,12 +441,16 @@ def main():
                     names.append(item.name)
                     if len(game.player.items) == 0:
                         game.player.cur_item = -1
+                    else:
+                        game.player.cur_item = 0
                 elif status == 1 and pid == game.player.id:
                     game.player.items.append(id)
                     action = 'picked up'
                     names.append(item.name)
                     if len(game.player.items) == 1:
                         game.player.cur_item = 0
+                    else:
+                        game.player.cur_item = len(game.player.items) - 1
 
 
             if pid == game.player.id:
