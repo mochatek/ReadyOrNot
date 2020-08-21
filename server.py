@@ -45,14 +45,15 @@ def move(sid, data):
 
 @sio.event
 def item(sid, data):
-    items = data['item'][1]
-    status = data['item'][2]
-    for item in items:
-        if status == 0:
-            players[sid]['items'].pop(players[sid]['items'].index(item))
-        else:
-            players[sid]['items'].append(item)
-    sio.emit('item', data)
+    if not players[sid]['jailed']:
+        items = data['item'][1]
+        status = data['item'][2]
+        for item in items:
+            if status == 0:
+                players[sid]['items'].pop(players[sid]['items'].index(item))
+            else:
+                players[sid]['items'].append(item)
+        sio.emit('item', data)
 
 @sio.event
 def door(sid, data):
@@ -60,15 +61,18 @@ def door(sid, data):
 
 @sio.event
 def attack(sid, data):
-    hits = []
-    for player in data['hits']:
-        pid, pos, damage = player
-        players[pid]['life'] = max(0, players[pid]['life'] - damage)
-        if players[pid]['life'] == 0:
-            sio.emit('jail', {'jail': (pid, pos, players[pid]['items'])})
-        else:
-            hits.append((pid, players[pid]['life']))
-    sio.emit('attack', {'hits': hits})
+    if not players[sid]['jailed']:
+        hits = []
+        for player in data['hits']:
+            pid, pos, damage = player
+            players[pid]['life'] = max(0, players[pid]['life'] - damage)
+            if players[pid]['life'] == 0:
+                sio.emit('jail', {'jail': (pid, pos, players[pid]['items'])})
+                players[pid]['life'] = 1
+                player[pid]['jailed'] = True
+            else:
+                hits.append((pid, players[pid]['life']))
+        sio.emit('attack', {'hits': hits})
 
 @sio.event
 def join(sid, data):
@@ -80,7 +84,8 @@ def join(sid, data):
         'pos': pos[0][0],
         'status': 1,
         'life': 1,
-        'items': []
+        'items': [],
+        'jailed': False
     }
     new = tuple(players[sid].values())[:4]
     data = {

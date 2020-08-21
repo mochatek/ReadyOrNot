@@ -1,6 +1,8 @@
 import socketio
 
 from sys import argv
+from random import randint
+
 
 from textwrap import wrap
 
@@ -279,6 +281,16 @@ class GameView(arcade.View):
         # Update Viewport based on player movement.
         self.scroll_screen()
 
+    def drop_items(self, position, items):
+        items = list(filter(lambda i:i.id in items, self.item_list))
+        for item in items:
+            x, y = position
+            x += randint(0, 5)
+            y += randint(0, 5)
+            item.position = (x, y)
+            item.taken = False
+
+
     def load_items(self):
         self.item_list.append(Item(0, (400,82), 'YELLOW'))
         self.item_list.append(Item(1, (620, 82), 'RED'))
@@ -395,18 +407,19 @@ class GameView(arcade.View):
 
 
         elif symbol == arcade.key.F:
-            if len(self.player.items) == 0:
+            if self.player.cur_item == -1:
                 self.info = 'Your inventory is empty !'
             else:
-                drop = self.player.items[-1]
+                drop = self.player.items[self.player.cur_item]
                 self.io.emit('item', {'item': (self.player.id, [drop], 0, self.player.position)})
 
 
         elif symbol == arcade.key.E:
             doors = arcade.check_for_collision_with_list(self.player, self.door_list)
             if doors:
-                keys = list(map(lambda i: i.id, filter(lambda i: i.code == doors[0].properties['key'], self.item_list)))
-                if any(id in self.player.items for id in keys):
+                keys = keys = list(filter(lambda i: i.code == doors[0].properties['key'], self.item_list))
+                key_ids = list(map(lambda i: i.id, keys))
+                if any(id in self.player.items for id in key_ids):
                     self.io.emit('door', {'door': (self.player.id, doors[0].properties['id'])})
                 else:
                     self.info = 'You need {} to access this door.'.format(keys[0].name)
@@ -458,9 +471,16 @@ def main():
         if game:
             pid, pos, items = data['jail']
             if pid == game.player.id:
-                print('im in jail')
+                game.player.life = 0
+                game.player.send_to_jail()
+                game.aim.toggle = False
+                game.info = "You got jailed. Hope for being rescued !"
             else:
-                print('other one in jail')
+                player = list(filter(lambda p: p.id == pid, game.others))[0]
+                player.life = 0
+                player.send_to_jail()
+            game.drop_items(pos, items)
+
 
     @sio.event
     def item(data):

@@ -23,7 +23,7 @@ class Player(Sprite):
         self.life = 1
         self.items = []
         self.cur_item = -1
-        self.in_jail = False
+        self.jailed = False
 
     def update(self):
         if self.change_y > 0:
@@ -37,3 +37,12 @@ class Player(Sprite):
 
         self.center_x += self.change_x
         self.center_y += self.change_y
+
+    def send_to_jail(self):
+        pos = {0: (940, 755), 1: (75, 755)}
+        self.change_x, self.change_y = 0, 0
+        self.items = []
+        self.cur_item = -1
+        self.jailed = True
+        self.position = pos[self.team]
+        self.life = 1
