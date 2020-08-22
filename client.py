@@ -215,9 +215,13 @@ class GameView(arcade.View):
         self.jail_list.draw()
         self.item_list.draw()
 
-        # Display player and all other players.
-        self.player_list.draw()
         self.others.draw()
+        # Draw Aim control if player is hoding any weapon.
+        if self.aim.toggle:
+            self.aim.draw()
+
+        # Display player
+        self.player_list.draw()
 
         # Display players with life and name.
         arcade.draw_xywh_rectangle_filled(self.player.left, self.player.top + 2, self.player.width * self.player.life, 3, arcade.color.GREEN)
@@ -237,10 +241,6 @@ class GameView(arcade.View):
         arcade.draw_text(self.info, self.view_left + 70, self.view_bottom + 380, arcade.color.GREEN_YELLOW, 10, bold = True)
         arcade.draw_text('Loot info here', self.view_left + 70, self.view_bottom + 365, arcade.color.BLUE, 10, bold = True)
 
-        # Draw Aim control if player is hoding any weapon.
-        if self.aim.toggle:
-            self.aim.draw()
-
 
     def on_update(self, delta_time):
         for physics in self.physics:
@@ -251,18 +251,19 @@ class GameView(arcade.View):
 
         if self.aim.toggle:
             direction = self.player.angle
-            dir_dict = {0: (self.player.center_x, self.player.center_y + self.aim.range * 32),
-                180: (self.player.center_x, self.player.center_y - self.aim.range * 32),
-                90: (self.player.center_x - self.aim.range * 32, self.player.center_y ),
-                270: (self.player.center_x + self.aim.range * 32, self.player.center_y)
-            }
-            self.aim.position = dir_dict[direction]
-            if arcade.has_line_of_sight(self.player.position, self.aim.position, self.block_list):
-                self.aim.set_texture(0)
-                self.aim.cur_texture_index = 0
+            self.aim.update(direction, self.player.position)
+            players = arcade.check_for_collision_with_list(self.aim, self.others)
+            if len(players) > 0:
+                if arcade.has_line_of_sight(self.player.position, players[0].position, self.block_list):
+                    self.aim.target = players[0]
+                    self.aim.set_texture(0)
+                else:
+                    self.aim.set_texture(1)
+                    self.aim.target = None
             else:
-                self.aim.set_texture(1)
-                self.aim.cur_texture_index = 1
+                self.aim.target = None
+                self.aim.set_texture(0)
+
 
 
         if self.info.startswith('You'):
@@ -341,13 +342,10 @@ class GameView(arcade.View):
             arcade.set_viewport(self.view_left, self.view_left + SCREEN_WIDTH, self.view_bottom, self.view_bottom + SCREEN_HEIGHT)
 
     def on_mouse_press(self, x, y, button, modifiers):
-        if self.aim.toggle and self.aim.cur_texture_index == 0:
-            players_hit = arcade.check_for_collision_with_list(self.aim, self.others)
-            if players_hit:
-                hits = []
-                for player in players_hit:
-                    hits.append((player.id, player.position, self.aim.damage))
-                self.io.emit('attack', {'hits': hits})
+        if self.aim.toggle and self.aim.target:
+            player = self.aim.target
+            hits = (player.id, player.position, self.aim.damage)
+            self.io.emit('attack', {'hits': hits})
 
 
     def on_mouse_scroll(self, x, y, scroll_x, scroll_y):
@@ -364,7 +362,6 @@ class GameView(arcade.View):
             item = list(filter(lambda i: i.id == self.player.items[self.player.cur_item], self.item_list))[0]
             if item.code in ['G', 'K']:
                 self.aim.toggle = True
-                self.aim.range = item.range
                 self.aim.damage = item.damage
             else:
                 self.aim.toggle = False
@@ -458,13 +455,12 @@ def main():
     @sio.event
     def attack(data):
         if game:
-            for player in data['hits']:
-                pid, life = player
-                if game.player.id == pid:
-                    game.player.life = life
-                else:
-                    player = list(filter(lambda p: p.id == pid, game.others))[0]
-                    player.life = life
+            pid, life = data['hits']
+            if game.player.id == pid:
+                game.player.life = life
+            else:
+                player = list(filter(lambda p: p.id == pid, game.others))[0]
+                player.life = life
 
     @sio.event
     def jail(data):
@@ -516,7 +512,6 @@ def main():
                         item = list(filter(lambda i: i.id == game.player.items[game.player.cur_item], game.item_list))[0]
                         if item.code in ['G', 'K']:
                             game.aim.toggle = True
-                            game.aim.range = item.range
                             game.aim.damage = item.damage
                         else:
                             game.aim.toggle = False

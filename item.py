@@ -9,8 +9,8 @@ class Item(Sprite):
             'BLUE': ('cardB', 'Blue Swipe Card', '[ Used to unlock Blue Rooms ]'),
             'GREEN': ('cardG', 'Green Swipe Card', '[ Used to unlock Green Rooms ]'),
             'YELLOW': ('cardY', 'Yellow Swipe Card', '[ Used to unlock Yellow Rooms ]'),
-            'G': ('gun', '9MM Pistol', 5, 0.1),
-            'K': ('knife', "Kitchen Knife", 2, 0.5),
+            'G': ('gun', '9MM Pistol', 0.1),
+            'K': ('knife', "Kitchen Knife", 0.2),
             'C': ('cash', 'Cash Bundles', '10 Lakh rupees'),
             'PH': ('phone', 'IPhone 11', '[ Worth Rs.100K ]'),
             'L': ('lap', 'Macbook Pro', '[ Worth Rs.160K ]'),
@@ -28,9 +28,8 @@ class Item(Sprite):
         self.name = item_dict[item][1]
         self.taken = False
         if item in ['G', 'K']:
-            self.range = item_dict[item][2]
-            self.damage = item_dict[item][3]
-            self.info = '{} [Range : {} , Damage : -{}%]'.format(self.name, self.range, self.damage * 100)
+            self.damage = item_dict[item][2]
+            self.info = '{} [Damage : -{}%]'.format(self.name, self.damage * 100)
         else:
             self.info = '{}: {}'.format(item_dict[item][1], item_dict[item][2])
 

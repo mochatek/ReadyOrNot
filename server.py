@@ -62,17 +62,14 @@ def door(sid, data):
 @sio.event
 def attack(sid, data):
     if not players[sid]['jailed']:
-        hits = []
-        for player in data['hits']:
-            pid, pos, damage = player
-            players[pid]['life'] = max(0, players[pid]['life'] - damage)
-            if players[pid]['life'] == 0:
-                sio.emit('jail', {'jail': (pid, pos, players[pid]['items'])})
-                players[pid]['life'] = 1
-                player[pid]['jailed'] = True
-            else:
-                hits.append((pid, players[pid]['life']))
-        sio.emit('attack', {'hits': hits})
+        pid, pos, damage = data['hits']
+        players[pid]['life'] = max(0, players[pid]['life'] - damage)
+        if players[pid]['life'] == 0:
+            sio.emit('jail', {'jail': (pid, pos, players[pid]['items'])})
+            player[pid]['jailed'] = True
+            players[pid]['life'] = 1
+        else:
+            sio.emit('attack', {'hits': (pid, players[pid]['life'])})
 
 @sio.event
 def join(sid, data):
