@@ -254,7 +254,7 @@ class GameView(arcade.View):
             self.aim.update(direction, self.player.position)
             players = arcade.check_for_collision_with_list(self.aim, self.others)
             if len(players) > 0:
-                if arcade.has_line_of_sight(self.player.position, players[0].position, self.block_list):
+                if not players[0].jailed and arcade.has_line_of_sight(self.player.position, players[0].position, self.block_list):
                     self.aim.target = players[0]
                     self.aim.set_texture(0)
                 else:
@@ -266,7 +266,7 @@ class GameView(arcade.View):
 
 
 
-        if self.info.startswith('You'):
+        if self.info.startswith('You') or self.info.endswith('game.'):
             self.prevInfo = self.info
 
         items = arcade.check_for_collision_with_list(self.player, self.item_list)
@@ -473,13 +473,8 @@ def main():
                 game.info = "You got jailed. Hope for being rescued !"
             else:
                 player = list(filter(lambda p: p.id == pid, game.others))[0]
-                if isinstance(pos, int):
-                    pos = player.position
-                    game.info = '{} left the game.'.format(player.name)
-                    game.others.remove(player)
-                else:
-                    player.life = 0
-                    player.send_to_jail()
+                player.life = 0
+                player.send_to_jail()
             game.drop_items(pos, items)
 
 
@@ -583,7 +578,7 @@ def main():
         if game:
             while 1:
                 if game.joined == True:
-                    pid, stat = data['player']
+                    pid, stat, items = data['player']
                     if pid == game.player.id:
                         game.player.status = stat
                         game.statusText = 'Waiting for other players ...'
@@ -591,7 +586,14 @@ def main():
                         player = list(filter(lambda p: p.id == pid, game.others))[0]
                         player.status = stat
                         if stat == 0:
-                            game.others.remove(player)
+                            try:
+                                game.info = '{} left the game.'.format(player.name)
+                                if items:
+                                    game.drop_items(player.position, items)
+                            except:
+                                pass
+                            finally:
+                                game.others.remove(player)
                     break
 
     @sio.event

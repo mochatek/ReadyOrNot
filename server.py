@@ -20,12 +20,8 @@ def connect(sid, environ):
 
 @sio.event
 def disconnect(sid):
-    if players[sid]['status'] == 2:
-        data = {'jail': (sid, 0, players[sid]['items'])}
-        sio.emit('jail', data, skip_sid=sid)
-    else:
-        data = {'player': (sid, 0)}
-        sio.emit('status', data, skip_sid=sid)
+    data = {'player': (sid, 0, players[sid]['items'])}
+    sio.emit('status', data, skip_sid=sid)
     sio.emit('disconnect', to=sid)
     del players[sid]
     print('disconnect ', sid)
@@ -34,7 +30,7 @@ def disconnect(sid):
 @sio.event
 def ready(sid):
     players[sid]['status'] = 2
-    data = {'player': (sid, 2)}
+    data = {'player': (sid, 2, [])}
     sio.emit('status', data)
 
     if list(map(lambda p:p['status'],players.values())).count(2) == 2:
