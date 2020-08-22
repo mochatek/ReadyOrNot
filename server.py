@@ -26,7 +26,7 @@ def disconnect(sid):
     else:
         data = {'player': (sid, 0)}
         sio.emit('status', data, skip_sid=sid)
-        sio.emit('disconnect', to=sid)
+    sio.emit('disconnect', to=sid)
     del players[sid]
     print('disconnect ', sid)
 

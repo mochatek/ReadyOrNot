@@ -1,4 +1,4 @@
-from arcade import Sprite, load_texture, calculate_hit_box_points_simple
+from arcade import Sprite, load_texture
 
 AIM_SCALE = 1
 
