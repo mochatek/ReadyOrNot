@@ -225,7 +225,7 @@ class GameView(arcade.View):
 
         # Display players with life and name.
         arcade.draw_xywh_rectangle_filled(self.player.left, self.player.top + 2, self.player.width * self.player.life, 3, arcade.color.GREEN)
-        # arcade.draw_text(self.player.name, self.player.center_x - 12, self.player.center_y + 16, arcade.color.BLUE, 8)
+        arcade.draw_text(self.player.name, self.player.center_x - 12, self.player.center_y + 16, arcade.color.BLUE, 8)
 
         # Display others life and name based on team.
         for player in self.others:
@@ -238,8 +238,8 @@ class GameView(arcade.View):
 
         # Display game message
         arcade.draw_xywh_rectangle_filled(self.view_left, self.view_bottom + 360, SCREEN_WIDTH, 40, arcade.color.BLACK)
-        arcade.draw_text(self.info, self.view_left + 70, self.view_bottom + 380, arcade.color.GREEN_YELLOW, 10, bold = True)
-        arcade.draw_text('Loot info here', self.view_left + 70, self.view_bottom + 365, arcade.color.BLUE, 10, bold = True)
+        arcade.draw_text(self.info, self.view_left + 70, self.view_bottom + 370, arcade.color.GREEN_YELLOW, 10, bold = True)
+        # arcade.draw_text('Loot info here', self.view_left + 70, self.view_bottom + 365, arcade.color.BLUE, 10, bold = True)
 
 
     def on_update(self, delta_time):
@@ -473,8 +473,13 @@ def main():
                 game.info = "You got jailed. Hope for being rescued !"
             else:
                 player = list(filter(lambda p: p.id == pid, game.others))[0]
-                player.life = 0
-                player.send_to_jail()
+                if isinstance(pos, int):
+                    pos = player.position
+                    game.info = '{} left the game.'.format(player.name)
+                    game.others.remove(player)
+                else:
+                    player.life = 0
+                    player.send_to_jail()
             game.drop_items(pos, items)
 
 

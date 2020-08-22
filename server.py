@@ -20,10 +20,14 @@ def connect(sid, environ):
 
 @sio.event
 def disconnect(sid):
+    if players[sid]['status'] == 2:
+        data = {'jail': (sid, 0, players[sid]['items'])}
+        sio.emit('jail', data, skip_sid=sid)
+    else:
+        data = {'player': (sid, 0)}
+        sio.emit('status', data, skip_sid=sid)
+        sio.emit('disconnect', to=sid)
     del players[sid]
-    data = {'player': (sid, 0)}
-    sio.emit('status', data, skip_sid=sid)
-    sio.emit('disconnect', to=sid)
     print('disconnect ', sid)
 
 
@@ -63,13 +67,14 @@ def door(sid, data):
 def attack(sid, data):
     if not players[sid]['jailed']:
         pid, pos, damage = data['hits']
-        players[pid]['life'] = max(0, players[pid]['life'] - damage)
-        if players[pid]['life'] == 0:
-            sio.emit('jail', {'jail': (pid, pos, players[pid]['items'])})
-            player[pid]['jailed'] = True
-            players[pid]['life'] = 1
-        else:
-            sio.emit('attack', {'hits': (pid, players[pid]['life'])})
+        if pid in players: #not left
+            players[pid]['life'] = max(0, players[pid]['life'] - damage)
+            if players[pid]['life'] == 0:
+                sio.emit('jail', {'jail': (pid, pos, players[pid]['items'])})
+                player[pid]['jailed'] = True
+                players[pid]['life'] = 1
+            else:
+                sio.emit('attack', {'hits': (pid, players[pid]['life'])})
 
 @sio.event
 def join(sid, data):
