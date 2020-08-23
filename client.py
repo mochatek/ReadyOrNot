@@ -150,6 +150,33 @@ class LobbyView(arcade.View):
                 self.io.emit('ready')
 
 
+# Shows Win/Lose status after game ends.
+class GameEndView(arcade.View):
+    def __init__(self, io, winner, team):
+        super().__init__()
+        if team == 0:
+            if winner == 0:
+                file = 'res\CopW.png'
+            else:
+                file = 'res\CopL.png'
+        else:
+            if winner == 1:
+                file = 'res\ThiefW.png'
+            else:
+                file = 'res\ThiefL.png'
+        self.io = io
+        self.bg = arcade.load_texture(file)
+
+    def on_draw(self):
+        arcade.start_render()
+        arcade.set_viewport(0, SCREEN_WIDTH, 0, SCREEN_HEIGHT)
+        arcade.draw_lrwh_rectangle_textured(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, self.bg)
+
+    def on_mouse_press(self, x, y, button, modifiers):
+    # Go back to initial game screen if next button pressed.
+        if 364 <= x <= 386 and  13 <= y <= 31:
+            self.io.disconnect()
+
 class GameView(arcade.View):
     def __init__(self, io, player, others, items):
         super().__init__()
@@ -208,7 +235,10 @@ class GameView(arcade.View):
         self.jail_list.draw()
         #self.floor_list.draw()
         arcade.draw_lrwh_rectangle_textured(0, 0, 1024, 832, self.bg)
-        self.block_list.draw()
+        try:
+            self.block_list.draw()
+        except:
+            pass
 
 
         self.item_list.draw()
@@ -604,9 +634,13 @@ def main():
     @sio.event
     def gameStat(data):
         if game:
-            if data.get('start', -1) != -1:
+            if 'start' in data:
                 items = data['start']
                 view = GameView(game.io, game.player, game.others, items)
+                game.window.show_view(view)
+            else:
+                winner_team = data['stop']
+                view = GameEndView(game.io, winner_team, game.player.team)
                 game.window.show_view(view)
 
     @sio.event
