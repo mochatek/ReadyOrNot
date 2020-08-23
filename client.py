@@ -32,6 +32,7 @@ class ScreenView(arcade.View):
 
     def on_draw(self):
         arcade.start_render()
+        arcade.set_viewport(0, SCREEN_WIDTH, 0, SCREEN_HEIGHT)
         arcade.draw_lrwh_rectangle_textured(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, self.bg)
         if self.msg:
             arcade.draw_text(self.msg, 110, 380, arcade.color.ANTIQUE_WHITE, 8, font_name=('Times New Roman'))
@@ -413,14 +414,23 @@ class GameView(arcade.View):
 
 
         elif symbol == arcade.key.E:
-            doors = arcade.check_for_collision_with_list(self.player, self.door_list)
-            if doors:
-                keys = keys = list(filter(lambda i: i.code == doors[0].properties['key'], self.item_list))
-                key_ids = list(map(lambda i: i.id, keys))
-                if any(id in self.player.items for id in key_ids):
-                    self.io.emit('door', {'door': (self.player.id, doors[0].properties['id'])})
-                else:
-                    self.info = 'You need {} to access this door.'.format(keys[0].name)
+            specials = arcade.check_for_collision_with_list(self.player, self.special_list)
+            if specials:
+                if specials[0].properties['id'] == 0: #Health Booster
+                    if self.player.life == 1:
+                        self.info = "You can't take medicine while health is max."
+                    else:
+                        self.info = 'Looking for medicines ...'
+                        self.io.emit('meds')
+            else:
+                doors = arcade.check_for_collision_with_list(self.player, self.door_list)
+                if doors:
+                    keys = keys = list(filter(lambda i: i.code == doors[0].properties['key'], self.item_list))
+                    key_ids = list(map(lambda i: i.id, keys))
+                    if any(id in self.player.items for id in key_ids):
+                        self.io.emit('door', {'door': (self.player.id, doors[0].properties['id'])})
+                    else:
+                        self.info = 'You need {} to access this door.'.format(keys[0].name)
 
 
 def main():
@@ -452,6 +462,21 @@ def main():
         if game:
             pid, name, team, pos = data['player']
             game.others.append(Player(pid, name, team, pos))
+
+
+    @sio.event
+    def meds(data):
+        if game:
+            pid, status = data['meds']
+            if status == 0:
+                game.info = 'Oops! No medicine left.'
+            else:
+                if pid == game.player.id:
+                    game.player.life = 1
+                    game.info = 'Medicines found. Full health restored.\nMedicines left: {}/8.'.format(status)
+                else:
+                    player = list(filter(lambda p: p.id == pid, game.others))[0]
+                    player.life = 1
 
     @sio.event
     def attack(data):
@@ -612,6 +637,7 @@ def main():
         if game:
             print('disconnected')
             msg = "Disconnected from server. Please connect again."
+            sio.disconnect()
             view = ScreenView(sio, msg)
             game.window.show_view(view)
 
@@ -621,6 +647,7 @@ def main():
     window.show_view(view)
     arcade.run()
     sio.disconnect()
+
 
 
 

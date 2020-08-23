@@ -8,7 +8,7 @@ items = {
     'item': ['W', 'C', 'PA', 'PH', 'B', 'L'],
     'pos': [(770, 430), (970, 435), (225, 640), (125, 455), (395, 690), (255, 480)]
     }
-
+meds_count = 8
 players = {}
 
 sio = socketio.Server()
@@ -20,6 +20,7 @@ def connect(sid, environ):
 
 @sio.event
 def disconnect(sid):
+    global players
     data = {'player': (sid, 0, players[sid]['items'])}
     sio.emit('status', data, skip_sid=sid)
     sio.emit('disconnect', to=sid)
@@ -29,6 +30,8 @@ def disconnect(sid):
 
 @sio.event
 def ready(sid):
+    global players
+    global items
     players[sid]['status'] = 2
     data = {'player': (sid, 2, [])}
     sio.emit('status', data)
@@ -44,7 +47,21 @@ def move(sid, data):
     sio.emit('move', data)
 
 @sio.event
+def meds(sid):
+    global meds_count
+    global players
+    if meds_count == 0:
+        status = 0
+        sio.emit('meds', {'meds': (sid, status)}, to=sid)
+    else:
+        meds_count -= 1
+        status = meds_count
+        players[sid]['life'] = 1
+        sio.emit('meds', {'meds': (sid, status)})
+
+@sio.event
 def item(sid, data):
+    global players
     if not players[sid]['jailed']:
         items = data['item'][1]
         status = data['item'][2]
@@ -61,6 +78,7 @@ def door(sid, data):
 
 @sio.event
 def escape(sid):
+    global players
     data = {'jail': (0, sid, 0, 0)}
     players[sid]['jailed'] = False
     players[sid]['life'] = 1
@@ -68,6 +86,7 @@ def escape(sid):
 
 @sio.event
 def attack(sid, data):
+    global players
     if not players[sid]['jailed']:
         pid, pos, damage = data['hits']
         if pid in players: #not left
@@ -80,6 +99,7 @@ def attack(sid, data):
 
 @sio.event
 def join(sid, data):
+    global players
     name, team =  data
     players[sid] = {
         'id': sid,

@@ -878,7 +878,6 @@
  <objectgroup id="18" name="Other">
   <object id="65" gid="226" x="1664" y="1290" width="128" height="128">
    <properties>
-    <property name="count" type="int" value="2"/>
     <property name="id" type="int" value="0"/>
    </properties>
   </object>
