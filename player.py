@@ -40,9 +40,9 @@ class Player(Sprite):
 
     def send_to_jail(self):
         pos = {0: (940, 755), 1: (75, 755)}
+        self.life = 0
         self.change_x, self.change_y = 0, 0
         self.items = []
         self.cur_item = -1
         self.jailed = True
         self.position = pos[self.team]
-        self.life = 1

@@ -189,7 +189,7 @@ class GameView(arcade.View):
             self.item_list.append(Item(id, position, item_code))
             id += 1
 
-        task = {0: "Theives inside. Catch everyone.", 1: "Loot Everything you can. (Be ware of Guards)"}
+        task = {0: "Theives inside. Catch everyone.", 1: "Loot Everything you can (Be ware of Guards)."}
         # Set initial game message.
         self.info = task[self.player.team]
         self.prevInfo = self.info
@@ -204,15 +204,12 @@ class GameView(arcade.View):
 
     def on_draw(self):
         arcade.start_render()
-
+        self.jail_list.draw()
         #self.floor_list.draw()
         arcade.draw_lrwh_rectangle_textured(0, 0, 1024, 832, self.bg)
-        try:
-            self.block_list.draw()
-        except:
-            pass
+        self.block_list.draw()
 
-        self.jail_list.draw()
+
         self.item_list.draw()
 
         self.others.draw()
@@ -249,6 +246,10 @@ class GameView(arcade.View):
         self.others.update()
         self.item_list.update()
 
+        if self.player.jailed:
+            if not arcade.check_for_collision_with_list(self.player, self.jail_list):
+                self.io.emit('escape')
+
         if self.aim.toggle:
             direction = self.player.angle
             self.aim.update(direction, self.player.position)
@@ -266,7 +267,7 @@ class GameView(arcade.View):
 
 
 
-        if self.info.startswith('You') or self.info.endswith('game.'):
+        if self.info.endswith('.'):
             self.prevInfo = self.info
 
         items = arcade.check_for_collision_with_list(self.player, self.item_list)
@@ -365,7 +366,7 @@ class GameView(arcade.View):
                 self.aim.damage = item.damage
             else:
                 self.aim.toggle = False
-            self.info = "You switched to {}".format(item.name)
+            self.info = "You switched to {}.".format(item.name)
 
 
     def on_key_press(self, symbol, modifiers):
@@ -394,18 +395,18 @@ class GameView(arcade.View):
                                     pickups.append(item.id)
                                     inventory += 1
                                 else:
-                                    self.info = "You already have it with you. Can't pick up again !"
+                                    self.info = "You already have it with you. Can't pick up again."
                             else:
-                                self.info = 'Your inventory is full ! [ MAX: 4 items ]'
+                                self.info = 'Your inventory is full ! [ MAX: 4 items ].'
             else:
-                self.info = 'Your inventory is full ! [ MAX: 4 items ]'
+                self.info = 'Your inventory is full ! [ MAX: 4 items ].'
             if (self.player.change_x + self.player.change_y) != 0 or pickups:
                 self.io.emit('item', {'item': (self.player.id, pickups, 1, self.player.position)})
 
 
         elif symbol == arcade.key.F:
             if self.player.cur_item == -1:
-                self.info = 'Your inventory is empty !'
+                self.info = 'Your inventory is empty.'
             else:
                 drop = self.player.items[self.player.cur_item]
                 self.io.emit('item', {'item': (self.player.id, [drop], 0, self.player.position)})
@@ -465,17 +466,27 @@ def main():
     @sio.event
     def jail(data):
         if game:
-            pid, pos, items = data['jail']
+            status, pid, pos, items = data['jail']
             if pid == game.player.id:
-                game.player.life = 0
-                game.player.send_to_jail()
-                game.aim.toggle = False
-                game.info = "You got jailed. Hope for being rescued !"
+                if status == 1:
+                    game.player.send_to_jail()
+                    game.aim.toggle = False
+                    game.info = "You got jailed. Hope for being rescued."
+                    game.drop_items(pos, items)
+                else:
+                    game.player.jailed = False
+                    game.player.life = 1
+                    game.info = 'You escaped from jail.'
             else:
                 player = list(filter(lambda p: p.id == pid, game.others))[0]
-                player.life = 0
-                player.send_to_jail()
-            game.drop_items(pos, items)
+                if status == 1:
+                    player.send_to_jail()
+                    game.info = "{} got jailed.".format(player.name)
+                    game.drop_items(pos, items)
+                else:
+                    player.jailed = False
+                    player.life = 1
+                    game.info = "{} escaped from jail.".format(player.name)
 
 
     @sio.event
@@ -524,7 +535,7 @@ def main():
                 if names:
                     names = ', '.join(names)
                     names = wrap(names, 40)
-                    game.info = 'You {} {}'.format(action, '\n'.join(names))
+                    game.info = 'You {} {}.'.format(action, '\n'.join(names))
             else:
                 player = list(filter(lambda p: p.id == pid, game.others))[0]
                 player.position = position

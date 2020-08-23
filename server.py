@@ -60,15 +60,21 @@ def door(sid, data):
     sio.emit('door', data)
 
 @sio.event
+def escape(sid):
+    data = {'jail': (0, sid, 0, 0)}
+    players[sid]['jailed'] = False
+    players[sid]['life'] = 1
+    sio.emit('jail', data)
+
+@sio.event
 def attack(sid, data):
     if not players[sid]['jailed']:
         pid, pos, damage = data['hits']
         if pid in players: #not left
             players[pid]['life'] = max(0, players[pid]['life'] - damage)
             if players[pid]['life'] == 0:
-                sio.emit('jail', {'jail': (pid, pos, players[pid]['items'])})
+                sio.emit('jail', {'jail': (1, pid, pos, players[pid]['items'])})
                 player[pid]['jailed'] = True
-                players[pid]['life'] = 1
             else:
                 sio.emit('attack', {'hits': (pid, players[pid]['life'])})
 

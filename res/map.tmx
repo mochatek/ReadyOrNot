@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.4" tiledversion="1.4.2" orientation="orthogonal" renderorder="right-down" width="32" height="26" tilewidth="128" tileheight="128" infinite="0" nextlayerid="19" nextobjectid="81">
+<map version="1.4" tiledversion="1.4.2" orientation="orthogonal" renderorder="right-down" width="32" height="26" tilewidth="128" tileheight="128" infinite="0" nextlayerid="20" nextobjectid="81">
  <tileset firstgid="1" name="D" tilewidth="384" tileheight="384" tilecount="10" columns="0">
   <grid orientation="orthogonal" width="1" height="1"/>
   <tile id="0">
@@ -495,7 +495,7 @@
    <image width="128" height="128" source="YS/11.png"/>
   </tile>
  </tileset>
- <tileset firstgid="160" name="Objects" tilewidth="512" tileheight="512" tilecount="50" columns="0">
+ <tileset firstgid="160" name="Objects" tilewidth="512" tileheight="384" tilecount="50" columns="0">
   <grid orientation="orthogonal" width="1" height="1"/>
   <tile id="0">
    <image width="256" height="128" source="Objects/sofa.png"/>
@@ -621,9 +621,6 @@
   <tile id="36">
    <image width="256" height="128" source="Objects/tub3.png"/>
   </tile>
-  <tile id="55">
-   <image width="512" height="512" source="Objects/jail.png"/>
-  </tile>
   <tile id="56">
    <image width="512" height="128" source="Objects/tv.png"/>
   </tile>
@@ -697,8 +694,11 @@
     </object>
    </objectgroup>
   </tile>
+  <tile id="77">
+   <image width="384" height="384" source="Objects/jail.png"/>
+  </tile>
  </tileset>
- <tileset firstgid="236" name="AD" tilewidth="384" tileheight="384" tilecount="10" columns="0">
+ <tileset firstgid="238" name="AD" tilewidth="384" tileheight="384" tilecount="10" columns="0">
   <grid orientation="orthogonal" width="1" height="1"/>
   <tile id="0">
    <image width="128" height="128" source="AD/1.png"/>
@@ -731,7 +731,7 @@
    <image width="384" height="384" source="AD/RD.png"/>
   </tile>
  </tileset>
- <tileset firstgid="246" name="AS" tilewidth="384" tileheight="384" tilecount="9" columns="0">
+ <tileset firstgid="248" name="AS" tilewidth="384" tileheight="384" tilecount="9" columns="0">
   <grid orientation="orthogonal" width="1" height="1"/>
   <tile id="0">
    <image width="128" height="128" source="AS/1.png"/>
@@ -761,7 +761,7 @@
    <image width="384" height="384" source="AS/AS.png"/>
   </tile>
  </tileset>
- <tileset firstgid="255" name="PD" tilewidth="384" tileheight="384" tilecount="10" columns="0">
+ <tileset firstgid="257" name="PD" tilewidth="384" tileheight="384" tilecount="10" columns="0">
   <grid orientation="orthogonal" width="1" height="1"/>
   <tile id="0">
    <image width="128" height="128" source="PD/1.png"/>
@@ -794,7 +794,7 @@
    <image width="384" height="384" source="PD/PD.png"/>
   </tile>
  </tileset>
- <tileset firstgid="265" name="PS" tilewidth="384" tileheight="384" tilecount="10" columns="0">
+ <tileset firstgid="267" name="PS" tilewidth="384" tileheight="384" tilecount="10" columns="0">
   <grid orientation="orthogonal" width="1" height="1"/>
   <tile id="0">
    <image width="128" height="128" source="PS/1.png"/>
@@ -827,7 +827,7 @@
    <image width="384" height="384" source="PS/RS.png"/>
   </tile>
  </tileset>
- <tileset firstgid="275" name="Pool" tilewidth="128" tileheight="128" tilecount="10" columns="0">
+ <tileset firstgid="277" name="Pool" tilewidth="128" tileheight="128" tilecount="10" columns="0">
   <grid orientation="orthogonal" width="1" height="1"/>
   <tile id="0">
    <image width="128" height="128" source="Pool/pool1.png"/>
@@ -860,9 +860,14 @@
    <image width="128" height="128" source="Pool/pool_tube.png"/>
   </tile>
  </tileset>
+ <layer id="19" name="Jail" width="32" height="26">
+  <data encoding="base64" compression="zlib">
+   eJztzQENAAAIA6D372oHY9w5KEBC2zy9AADgmgXtyAHb
+  </data>
+ </layer>
  <layer id="12" name="Floor" width="32" height="26">
   <data encoding="base64" compression="zlib">
-   eJzFltlPU0EUxufSQr2ALFZoaSWKa1Dj8qQQ0Re3uDz4xyC8gE0LccEluKH/o7uN4hb9Tu456cd0ppIIcZJf7sx05nxnziyns+7/ldv6fQ1egTWwDJa2iQY4DU6Bk+THS/ACPAGp5+PsFqzPitgugp3gOPU/A0/BasTOcOLc0CYZTLIYNiK2joGjYJL6lqk+B3q9OQOw+Vsq+Cagi9o5kAfdoAf0gzp+qulctjVPdfbvjqcnccuBvMtiVgjoWNv3y9fvkfmufR8XqH4BnFdmtE/m7AisP0/r7+qwfrNv65ByE9xQrpP+OTAKSmBa+xKxT/q+ThLwyeJR0LOQenaugX1gAlz19CugDMY15t0aOyl9MNIboKCEfkuTbK7ZEZtHwH6w19OfAmPgLDjj2ovdox/gO9FUuO+bjg3d2yvgsvpxifplXw641t4wvE/r4A14C96B99T+qO1fNJ7PFSMxnqFxvC8Wn8Na5ziJ/gfV+gQ+B9qsL/s64lpnq0ztaRpncRFuqS+H1B+JVao0O6zf2k0aL/qyr3K2quCiy/bY32d78xsaiwnVP7gF6y+RD7bmJbexyPuzqNj5sHjwOVnXdfqaHAPWn6L1juvXdPj9sfxnPKb6Go376bL4fo0gv32h8ZbrhCLVQ/nvLrgH7oMHYEXrlhPt7a65eKnrd861cl0f6HdZzhsAu8CwC+e/EJYT5Q3Lqb4fL4tT3W18by3XhYjlv1CR9Vgeqam/EiuO0arq23s3HzJEhfOfzLN32vw3vVxkfhqpc8mRPwXPfs3TL8KBksfu5N///8Ts+voV9FXBHvqWNYeE9tv2nM946HxXPJtVtevrj6JvzGNEc6js70PXfkeegxOu/YxLW85+2sGur297JP85eM9MXzRX1I9HLnsjTF90h1x2r+R+DZI+2+Uzxvr8/vnIOxW7n3LmY3dschN2pfztnmxnkXv9B/Z1x38=
+   eJzFltlPU0EUxqfc0nJlEWigZamKa1Dj8qQQ0Re3qDz4xyC8qE0LccEluKH/pLuN4vqd3HPSj+lMJRHiJL/cmenM+c6cWU4X3P8rt/T7BrwG62AFLO8QDXAanAInyY9X4CV4ClLPx4VtWJ8VsV0C/eA49T8Hz8BaxE4p59zwFhnKZTFsRGwdA0fBNPWtUH0R7PLmDMJmDnSBBOSp3Q0KoAh6wACoY05N57KtJaqzf3c9PYlbAvIui1ka0LG275evXwBF176Pt6l+AZxX5rRP5vQE1l+g9ec7rN/s2zqkzIMbynXSPwdGQRnMah/MuC7S93WSgE8Wj1TPQurZuQb2gSlw1dMfBxVQ1Zh3a+yk9MNIX4BUCf3Wm8vmmh2xeQTsB3s9/RkwBs6CM6692D36CX4QTYX7vuvY0L29Ai6rH5eoX/blgGvtDcP7tAHegnfgPfhA7U/a/k3j+VwxEuM5Gsf7YvE5rHWOk+h/VK3P4EugzfqyryOudbYq1J6lcRYX4ab6ckj9kVilSrPD+q3dpPGiL/sqZ2sCXHTZHvv7bG9+Q2MxpfoHt2H9ZfLB1rzsNhd5f+4odj4sHnxONnSdvibHgPVnaL1V/ZoOvz+W/4wnVF+ncb9cFt9vEeS3rzTecp1Qonoo/90D98ED8BCsat1yor3dNRcvdf0uulau6wV9Lst5A2AYDLlw/gthOVHesET1/XhZnOpu83truS5ELP+FiqzH8khN/ZVYcYzWVN/eu6WQISqc/2SevdPmv+klkflppM4lIX+Knv2apz8CB8Y8RnP//v8nZtfXn0RfFeyh77jmkNB+257zGQ+d70nPZlXt+voV9E14lDWHyv4+cu135AU44drPuLTl7Kcd7Pr6tkfyn4P3zPRFc1X9eOyyN8L0RXfQZfdK7tdu0me7fMZYn98/H3mnYvdTznzsjk1vwa6Uv92TnSxyr/8AhEXB8g==
   </data>
  </layer>
  <layer id="13" name="Object" width="32" height="26">
@@ -946,9 +951,4 @@
    </properties>
   </object>
  </objectgroup>
- <layer id="15" name="Jail" width="32" height="26">
-  <data encoding="base64" compression="zlib">
-   eJzt1EEJAAAIBMHrX9A6dhBEkJkC+9uEa/W0BbDFywCYakEYAoY=
-  </data>
- </layer>
 </map>
