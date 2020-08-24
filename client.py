@@ -2,8 +2,6 @@ import socketio
 
 from sys import argv
 from random import randint
-
-
 from textwrap import wrap
 
 import arcade
@@ -22,45 +20,46 @@ MARGIN = 160
 BAG_CAPACITY = 4
 AMBIENT_COLOR = (10, 10, 10)
 
-# Initail game screen.
-class ScreenView(arcade.View):
+
+# Home screen.
+class HomeView(arcade.View):
     def __init__(self, io, msg=None, light_layer=None):
         super().__init__()
         global game
         self.io = io
         self.msg = msg
-        self.bg = arcade.load_texture('res\screen.png')
-        self.team = -1
-        self.lock = False
+        self.team = -1 # [0:Guards, 1: Thief]
+        self.lock = False # [True: once connected to server]
         self.light_layer = light_layer
+
+        self.bg = arcade.load_texture('res\screen.png')
 
     def on_draw(self):
         arcade.start_render()
-        self.light_layer.draw()
         arcade.set_viewport(0, SCREEN_WIDTH, 0, SCREEN_HEIGHT)
+
+        self.light_layer.draw()
         arcade.draw_lrwh_rectangle_textured(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, self.bg)
         if self.msg:
             arcade.draw_text(self.msg, 110, 380, arcade.color.ANTIQUE_WHITE, 8, font_name=('Times New Roman'))
 
-
-
     def on_mouse_press(self, x, y, button, modifiers):
-        # If player pressed setting button, show info.
+        # Click on setting button.
         if 374 <= y <= 390 and 373 <= x <= 389:
-            # Show settings and other info.
-            view = InfoView(self.io, self.light_layer)
+            view = SettingsView(self.io, self.light_layer)
             self.window.show_view(view)
 
-        # Find team chosen by player.
+        # Choosing team.
         elif 120 <= y <= 136:
             if  96 <= x <= 141:
                 self.team = 0
             elif 249 <= x <= 294:
                 self.team = 1
 
+        # Check whether any team was selected.
         if self.team != -1 and not self.lock:
-            self.msg = 'Trying to connect with server. Please wait.'
             global game
+            self.msg = 'Trying to connect with server. Please wait.'
             game = self
             try:
                 self.io.connect('http://localhost:5000')
@@ -71,12 +70,13 @@ class ScreenView(arcade.View):
 
 
 # Settings and Credits.
-class InfoView(arcade.View):
+class SettingsView(arcade.View):
     def __init__(self, io, light_layer):
         super().__init__()
-        self.bg = arcade.load_texture('res\info.png')
         self.io = io
         self.light_layer = light_layer
+
+        self.bg = arcade.load_texture('res\info.png')
 
     def on_draw(self):
         arcade.start_render()
@@ -84,9 +84,9 @@ class InfoView(arcade.View):
         arcade.draw_lrwh_rectangle_textured(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, self.bg)
 
     def on_key_press(self, symbol, modifiers):
-        # Switch back to Load screen.
+        # Switch back to home screen.
         if symbol == arcade.key.ESCAPE:
-            view = ScreenView(self.io, None, self.light_layer)
+            view = HomeView(self.io, None, self.light_layer)
             self.window.show_view(view)
 
 
@@ -94,30 +94,26 @@ class InfoView(arcade.View):
 class LobbyView(arcade.View):
     def __init__(self, team, io, light_layer):
         super().__init__()
-        self.joined = False #true once data has been updated in client
+        self.joined = False # [True: once data from server has been assigned in client]
         global game
         game = self
-
         self.io = io
-        self.bg = arcade.load_texture('res\lobby.png')
+        self.statusText = "Press R to Ready .."
+        self.light_layer = light_layer
 
+        self.bg = arcade.load_texture('res\lobby.png')
         self.others = arcade.SpriteList()
         self.item_list = arcade.SpriteList()
 
-        # Request join.
+        # Request to join game.
         name = argv[1]
         self.io.emit('join', [name, team])
-
-        # Message to be displayed below. (It is based on the game status)
-        self.statusText = "Press R to Ready .."
-        self.light_layer = light_layer
 
     def on_draw(self):
         arcade.start_render()
         self.light_layer.draw()
-        arcade.draw_lrwh_rectangle_textured(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, self.bg)
 
-        # Display game message.
+        arcade.draw_lrwh_rectangle_textured(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, self.bg)
         arcade.draw_text(self.statusText, 20, 15, arcade.color.WHITE, 10, bold=True)
 
         if self.joined:
@@ -128,6 +124,7 @@ class LobbyView(arcade.View):
             arcade.Sprite(file, 1, center_x=120, center_y=268).draw()
             arcade.draw_text(self.player.name, 200, 255, color[self.player.status], 12, bold=True)
 
+            # Draw other players and name.
             y = 268
             # sort_order = {0:False, 1:True}
             # for p in sorted(self.data, key = lambda x:x[6], reverse = sort_order.get(self.player.team)):
@@ -145,15 +142,13 @@ class LobbyView(arcade.View):
                     except:
                         pass
 
-
-
     def on_mouse_press(self, x, y, button, modifiers):
-    # Go back to screen view.
+        # Go back to home.
         if 364 <= x <= 386 and  13 <= y <= 31:
-            # self.io.emit('disconnect', self.player.id)
             self.io.disconnect()
 
     def on_key_press(self, key, modifiers):
+        # Ready to play.
         if self.joined:
             if key == arcade.key.R:
                 self.io.emit('ready')
@@ -163,28 +158,22 @@ class LobbyView(arcade.View):
 class GameEndView(arcade.View):
     def __init__(self, io, winner, team, light_layer):
         super().__init__()
-        if team == 0:
-            if winner == 0:
-                file = 'res\CopW.png'
-            else:
-                file = 'res\CopL.png'
-        else:
-            if winner == 1:
-                file = 'res\ThiefW.png'
-            else:
-                file = 'res\ThiefL.png'
         self.io = io
-        self.bg = arcade.load_texture(file)
         self.light_layer = light_layer
+
+        # Choose end screen image.
+        texture = findTexture(team, winner)
+        self.bg = arcade.load_texture(file)
 
     def on_draw(self):
         arcade.start_render()
-        self.light_layer.draw()
         arcade.set_viewport(0, SCREEN_WIDTH, 0, SCREEN_HEIGHT)
+
+        self.light_layer.draw()
         arcade.draw_lrwh_rectangle_textured(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, self.bg)
 
     def on_mouse_press(self, x, y, button, modifiers):
-    # Go back to initial game screen if next button pressed.
+        # Go back to Home.
         if 364 <= x <= 386 and  13 <= y <= 31:
             self.io.disconnect()
 
@@ -192,131 +181,82 @@ class GameView(arcade.View):
     def __init__(self, io, player, others, items, light_layer):
         super().__init__()
         global game
-        game =  self
         self.io = io
+        self.player = player # Player
+        self.others = others # Other players
         self.joined = True
+        game =  self
         self.view_left = 0
         self.view_bottom = 0
+
         self.bg = arcade.load_texture('res\BG.png')
-        # Reade tilemap and gather resources.
+
+        # Load map and process layers.
         map = arcade.read_tmx('res\map.tmx')
-        # Spacial hashing increases speed in collission detection.
-        self.block_list = arcade.SpriteList(use_spatial_hash=True, is_static=True)
-        self.wall_list = arcade.process_layer(map, 'Wall', SCALING)
+        self.block_list = arcade.SpriteList(use_spatial_hash=True, is_static=True) # Spacial hash: Faster collission detection.
+        self.wall_list = arcade.process_layer(map, 'Wall', SCALING) # Walls
+        self.object_list = arcade.process_layer(map, 'Object', SCALING) # Furnitures and objects
+        self.special_list = arcade.process_layer(map, 'Other', SCALING) # FAB and Main switch
+        self.door_list = arcade.process_layer(map, 'Door', SCALING) # Doors
+        self.jail_list = arcade.process_layer(map, 'Jail', SCALING) # Jails
+
+        # All blocking sprites.
         self.block_list.extend(self.wall_list)
-        # load objects.
-        self.object_list = arcade.process_layer(map, 'Object', SCALING)
         self.block_list.extend(self.object_list)
-        # Load FAB and Main switch.
-        self.special_list = arcade.process_layer(map, 'Other', SCALING)
         self.block_list.extend(self.special_list)
-        # Load doors.
-        self.door_list = arcade.process_layer(map, 'Door', SCALING)
         self.block_list.extend(self.door_list)
-        # Load Jails.
-        self.jail_list = arcade.process_layer(map, 'Jail', SCALING)
-        self.player = player
+
+        # SpriteList for player sprite.
         self.player_list = arcade.SpriteList()
         self.player_list.append(self.player)
-        self.others = others
 
+        # Items available to pickup.
         self.item_list = arcade.SpriteList()
+        # Load cards and weapons
         self.load_items()
+        # Load lootable items as per data from server
         id = 14
         for item in items:
             item_code, position = item
             self.item_list.append(Item(id, position, item_code))
             id += 1
 
-        task = {0: "Theives inside. Catch everyone.", 1: "Loot Everything you can (Be ware of Guards)."}
         # Set initial game message.
+        task = {0: "Theives inside. Catch everyone.", 1: "Loot Everything you can (Be ware of Guards)."}
         self.info = task[self.player.team]
-        self.prevInfo = self.info
+        self.prevInfo = self.info # Toggle between item-info and other game message.
+
         # Initialize Aiming control.
         self.aim = Aim(self.player.position)
-        # Physics engine for the game.
+
+        # Physics engine for players.
         self.physics = []
         self.physics.append(arcade.PhysicsEngineSimple(self.player, self.block_list))
         for player in self.others:
             self.physics.append(arcade.PhysicsEngineSimple(player, self.block_list))
 
         self.light_layer = light_layer
-        self.player_light = Light(0, 0, 80, arcade.color.GREEN, 'soft')
-        self.has_light = 0
+        self.player_light = Light(0, 0, 80, arcade.color.GREEN, 'soft') # Light to follow player
+        self.has_light = 0 # [0:main switch off, 1:main switch on]
 
 
     def on_draw(self):
         arcade.start_render()
+
+        # If main switch is off, then set to night mode and activate player_light
         if not self.has_light:
             self.light_layer.add(self.player_light)
-            with self.light_layer:
-                self.jail_list.draw()
-                #self.floor_list.draw()
-                arcade.draw_lrwh_rectangle_textured(0, 0, 1024, 832, self.bg)
-                try:
-                    self.block_list.draw()
-                except:
-                    pass
+            with self.light_layer: # All objects to be lit by light is drawn inside this.
+                self.draw_all_game_objects()
+            self.light_layer.draw(ambient_color=AMBIENT_COLOR) # Draw lights (night + player_light)
 
-                self.item_list.draw()
-
-                self.others.draw()
-                # Draw Aim control if player is hoding any weapon.
-                if self.aim.toggle:
-                    self.aim.draw()
-
-                # Display player
-                self.player_list.draw()
-
-                # Display players with life and name.
-                arcade.draw_xywh_rectangle_filled(self.player.left, self.player.top + 2, self.player.width * self.player.life, 3, arcade.color.GREEN)
-                arcade.draw_text(self.player.name, self.player.center_x - 12, self.player.center_y + 16, arcade.color.BLUE, 8)
-
-                # Display others life and name based on team.
-                for player in self.others:
-                    if player.team == self.player.team:
-                        arcade.draw_xywh_rectangle_filled(player.left, player.top + 2, player.width * player.life, 3, arcade.color.GREEN)
-                        arcade.draw_text(player.name, player.center_x - 12, player.center_y + 15, arcade.color.BLUE, 8, bold=True)
-                    else:
-                        arcade.draw_xywh_rectangle_filled(player.left, player.top + 2, player.width * player.life, 3, arcade.color.ROSE)
-                        arcade.draw_text(player.name, player.center_x - 12, player.center_y + 15, arcade.color.RED, 8, bold=True)
-
-            self.light_layer.draw(ambient_color=AMBIENT_COLOR)
+        # If main switch is on, then no need of light effects.
         else:
             if self.player_light in self.light_layer:
                 self.light_layer.remove(self.player_light)
             self.light_layer.draw()
-            self.jail_list.draw()
-            #self.floor_list.draw()
-            arcade.draw_lrwh_rectangle_textured(0, 0, 1024, 832, self.bg)
-            try:
-                self.block_list.draw()
-            except:
-                pass
 
-            self.item_list.draw()
-
-            self.others.draw()
-            # Draw Aim control if player is hoding any weapon.
-            if self.aim.toggle:
-                self.aim.draw()
-
-            # Display player
-            self.player_list.draw()
-
-            # Display players with life and name.
-            arcade.draw_xywh_rectangle_filled(self.player.left, self.player.top + 2, self.player.width * self.player.life, 3, arcade.color.GREEN)
-            arcade.draw_text(self.player.name, self.player.center_x - 12, self.player.center_y + 16, arcade.color.BLUE, 8)
-
-            # Display others life and name based on team.
-            for player in self.others:
-                if player.team == self.player.team:
-                    arcade.draw_xywh_rectangle_filled(player.left, player.top + 2, player.width * player.life, 3, arcade.color.GREEN)
-                    arcade.draw_text(player.name, player.center_x - 12, player.center_y + 15, arcade.color.BLUE, 8, bold=True)
-                else:
-                    arcade.draw_xywh_rectangle_filled(player.left, player.top + 2, player.width * player.life, 3, arcade.color.ROSE)
-                    arcade.draw_text(player.name, player.center_x - 12, player.center_y + 15, arcade.color.RED, 8, bold=True)
-
+            self.draw_all_game_objects()
 
         # Display game message
         arcade.draw_xywh_rectangle_filled(self.view_left, self.view_bottom + 360, SCREEN_WIDTH, 40, arcade.color.BLACK)
@@ -331,33 +271,126 @@ class GameView(arcade.View):
         self.others.update()
         self.item_list.update()
 
+        # During night mode, player light must follow player.
         if not self.has_light:
             self.player_light.position = self.player.position
 
+        # Check whether player escaped from jail.
         if self.player.jailed:
             if not arcade.check_for_collision_with_list(self.player, self.jail_list):
                 self.io.emit('escape')
 
         if self.aim.toggle:
-            direction = self.player.angle
-            self.aim.update(direction, self.player.position)
-            players = arcade.check_for_collision_with_list(self.aim, self.others)
-            if len(players) > 0:
-                if not players[0].jailed and arcade.has_line_of_sight(self.player.position, players[0].position, self.block_list):
-                    self.aim.target = players[0]
-                    self.aim.set_texture(0)
-                else:
-                    self.aim.set_texture(1)
-                    self.aim.target = None
+            self.update_aim() # Manage aim status and lock target
+
+        self.toggle_item_info() # Toggle between item_info and other game messages.
+
+        # Update Viewport based on player movement.
+        self.scroll_screen()
+
+
+    # Click for attacking.
+    def on_mouse_press(self, x, y, button, modifiers):
+        # If target is locked, then send attack data
+        if self.aim.target:
+            player = self.aim.target
+            hits = (player.id, player.position, self.aim.damage)
+            self.io.emit('attack', {'hits': hits})
+
+     # Switch between items with player.
+    def on_mouse_scroll(self, x, y, scroll_x, scroll_y):
+        # Check if player has anything in his inventory.
+        if self.player.cur_item != -1:
+            inventory = len(self.player.items)
+            if scroll_y == 1:
+                self.player.cur_item = (self.player.cur_item + 1) % inventory
+            elif scroll_y == -1:
+                self.player.cur_item = (self.player.cur_item - 1 + inventory) % inventory
+
+            # Show game message of item switch.
+            self.show_item_switch_msg()
+
+    def on_key_press(self, symbol, modifiers):
+        # Player movement
+        if symbol == arcade.key.D and self.player.change_x != SPEED:
+            self.io.emit('move', {'move': (self.player.id, self.player.position, 3)})
+        elif symbol == arcade.key.A and self.player.change_x != -SPEED:
+            self.io.emit('move', {'move': (self.player.id, self.player.position, 2)})
+        elif symbol == arcade.key.W and self.player.change_y != SPEED:
+            self.io.emit('move', {'move': (self.player.id, self.player.position, 0)})
+        elif symbol == arcade.key.S and self.player.change_y != -SPEED:
+            self.io.emit('move', {'move': (self.player.id, self.player.position, 1)})
+
+        # Stop or pickup item
+        elif symbol == arcade.key.SPACE:
+            pickups = []
+            inventory = len(self.player.items)
+            if inventory < BAG_CAPACITY:
+                items = arcade.check_for_collision_with_list(self.player, self.item_list)
+                if items:
+                    items = list(filter(lambda i: not i.taken, items))
+                    if items:
+                        for item in items:
+                            if inventory < BAG_CAPACITY:
+                                item_ids = list(map(lambda i: i.id, filter(lambda i: i.code == item.code, game.item_list)))
+                                if not any(id in item_ids for id in self.player.items):
+                                    if item.code in ['C', 'PH', 'L', 'PA', 'W', 'B']:
+                                        pickups.append((item.id, 1))
+                                    else:
+                                        pickups.append((item.id, 0))
+                                    inventory += 1
+                                else:
+                                    self.info = "You already have it with you. Can't pick up again."
+                            else:
+                                self.info = 'Your inventory is full ! [ MAX: 4 items ].'
             else:
-                self.aim.target = None
-                self.aim.set_texture(0)
+                self.info = 'Your inventory is full ! [ MAX: 4 items ].'
+
+            # if not idle or has picked up some item, send data to server.
+            if (self.player.change_x + self.player.change_y) != 0 or pickups:
+                self.io.emit('item', {'item': (self.player.id, pickups, 1, self.player.position)})
+
+        # drop item.
+        elif symbol == arcade.key.F:
+            if self.player.cur_item == -1:
+                self.info = 'Your inventory is empty.'
+            else:
+                drop = self.player.items[self.player.cur_item]
+                item = list(filter(lambda i: i.id == drop, self.item_list))[0]
+                if item.code in ['C', 'PH', 'L', 'PA', 'W', 'B']:
+                    self.io.emit('item', {'item': (self.player.id, [(drop, 1)], 0, self.player.position)})
+                else:
+                    self.io.emit('item', {'item': (self.player.id, [(drop, 0)], 0, self.player.position)})
+
+        # Access door, FAB and Main switch
+        elif symbol == arcade.key.E:
+            specials = arcade.check_for_collision_with_list(self.player, self.special_list)
+            if specials:
+                if specials[0].properties['id'] == 0: #Health Booster
+                    if self.player.life == 1:
+                        self.info = "You can't take medicine while health is max."
+                    else:
+                        self.info = 'Looking for medicines ...'
+                        self.io.emit('meds')
+                else: # Main Switch
+                    self.io.emit('light', (self.has_light + 1) % 2)
+            else:
+                doors = arcade.check_for_collision_with_list(self.player, self.door_list)
+                if doors:
+                    keys = keys = list(filter(lambda i: i.code == doors[0].properties['key'], self.item_list))
+                    key_ids = list(map(lambda i: i.id, keys))
+                    if any(id in self.player.items for id in key_ids):
+                        self.io.emit('door', {'door': (self.player.id, doors[0].properties['id'])})
+                    else:
+                        self.info = 'You need {} to access this door.'.format(keys[0].name)
 
 
-
+    def toggle_item_info(self):
+        # All messages except item-info ends with dot.
+        # If player collides with any item, show it's info.
+        # When players leaved the item, toggle back to game info.
         if self.info.endswith('.'):
             self.prevInfo = self.info
-
         items = arcade.check_for_collision_with_list(self.player, self.item_list)
         if items:
             items = list(filter(lambda i: not i.taken and i.id not in self.player.items, items))
@@ -368,9 +401,55 @@ class GameView(arcade.View):
         else:
             self.info = self.prevInfo
 
-        # Update Viewport based on player movement.
-        self.scroll_screen()
+    def update_aim(self):
+        # Align aim control to the direction player is facing.
+        direction = self.player.angle
+        self.aim.update(direction, self.player.position)
 
+        # Check if aim control is over any player.
+        # If True and has line of sight, then set the closest player as target
+        # Aim is inactive(Red) only if there is no LOS to target
+        players = arcade.check_for_collision_with_list(self.aim, self.others)
+        if len(players) > 0:
+            if not players[0].jailed and arcade.has_line_of_sight(self.player.position, players[0].position, self.block_list):
+                self.aim.target = players[0] # Lock target
+                self.aim.set_texture(0) # Set aim to Green
+            else:
+                self.aim.set_texture(1) # Set aim to red (Blocking)
+                self.aim.target = None
+        else:
+            self.aim.target = None
+            self.aim.set_texture(0)
+
+    # Draw all game objects.
+    def draw_all_game_objects(self):
+        self.jail_list.draw()
+        arcade.draw_lrwh_rectangle_textured(0, 0, 1024, 832, self.bg)
+        try:
+            self.block_list.draw()
+        except:
+            pass
+        self.item_list.draw()
+        self.others.draw()
+        if self.aim.toggle: # Draw only if player is holding any weapon
+            self.aim.draw()
+        self.player_list.draw()
+
+        # Display player's with life and name.
+        arcade.draw_xywh_rectangle_filled(self.player.left, self.player.top + 2, self.player.width * self.player.life, 3, arcade.color.GREEN)
+        arcade.draw_text(self.player.name, self.player.center_x - 12, self.player.center_y + 16, arcade.color.BLUE, 8)
+
+        # Display others life and name based on team.
+        for player in self.others:
+            if player.team == self.player.team:
+                arcade.draw_xywh_rectangle_filled(player.left, player.top + 2, player.width * player.life, 3, arcade.color.GREEN)
+                arcade.draw_text(player.name, player.center_x - 12, player.center_y + 15, arcade.color.BLUE, 8, bold=True)
+            else:
+                arcade.draw_xywh_rectangle_filled(player.left, player.top + 2, player.width * player.life, 3, arcade.color.ROSE)
+                arcade.draw_text(player.name, player.center_x - 12, player.center_y + 15, arcade.color.RED, 8, bold=True)
+
+
+    # Drop items where player was last standing when jailed or leaves game.
     def drop_items(self, position, items):
         items = list(filter(lambda i:i.id in items, self.item_list))
         for item in items:
@@ -380,7 +459,17 @@ class GameView(arcade.View):
             item.position = (x, y)
             item.taken = False
 
+    # Show appropriate msg when an item is switched.
+    def show_item_switch_msg(self):
+        item = list(filter(lambda i: i.id == self.player.items[self.player.cur_item], self.item_list))[0]
+        if item.code in ['G', 'K']: # if switched to weapon (gun/knife)
+            self.aim.toggle = True # activate aim control
+            self.aim.damage = item.damage # set damage of current weapon
+        else:
+            self.aim.toggle = False
+        self.info = "You switched to {}.".format(item.name)
 
+    # Loads swipe cards and weapons.
     def load_items(self):
         self.item_list.append(Item(0, (400,82), 'YELLOW'))
         self.item_list.append(Item(1, (620, 82), 'RED'))
@@ -399,7 +488,8 @@ class GameView(arcade.View):
 
     # Scrolling screen according to player movement.
     def scroll_screen(self):
-        changed = False
+        changed = False # Flag to identify whether player scrolled.
+
         # Scroll Left
         left_boundary = self.view_left + MARGIN
         if self.player.left < left_boundary:
@@ -427,119 +517,38 @@ class GameView(arcade.View):
         # Vieport uses int, claculated values can be float.
         self.view_left = int(self.view_left)
         self.view_bottom = int(self.view_bottom)
+
         if changed == True:
             arcade.set_viewport(self.view_left, self.view_left + SCREEN_WIDTH, self.view_bottom, self.view_bottom + SCREEN_HEIGHT)
 
-    def on_mouse_press(self, x, y, button, modifiers):
-        if self.aim.toggle and self.aim.target:
-            player = self.aim.target
-            hits = (player.id, player.position, self.aim.damage)
-            self.io.emit('attack', {'hits': hits})
-
-
-    def on_mouse_scroll(self, x, y, scroll_x, scroll_y):
-        # Check if player has anything in his inventory.
-        if self.player.cur_item != -1:
-            inventory = len(self.player.items)
-            # Switch between weapons.
-            if scroll_y == 1:
-                self.player.cur_item = (self.player.cur_item + 1) % inventory
-            elif scroll_y == -1:
-                self.player.cur_item = (self.player.cur_item - 1 + inventory) % inventory
-
-            # Show game message of weapon switch.
-            item = list(filter(lambda i: i.id == self.player.items[self.player.cur_item], self.item_list))[0]
-            if item.code in ['G', 'K']:
-                self.aim.toggle = True
-                self.aim.damage = item.damage
-            else:
-                self.aim.toggle = False
-            self.info = "You switched to {}.".format(item.name)
-
-
-    def on_key_press(self, symbol, modifiers):
-        if symbol == arcade.key.D and self.player.change_x != SPEED:
-            self.io.emit('move', {'move': (self.player.id, self.player.position, 3)})
-        elif symbol == arcade.key.A and self.player.change_x != -SPEED:
-            self.io.emit('move', {'move': (self.player.id, self.player.position, 2)})
-        elif symbol == arcade.key.W and self.player.change_y != SPEED:
-            self.io.emit('move', {'move': (self.player.id, self.player.position, 0)})
-        elif symbol == arcade.key.S and self.player.change_y != -SPEED:
-            self.io.emit('move', {'move': (self.player.id, self.player.position, 1)})
-
-
-        elif symbol == arcade.key.SPACE:
-            pickups = []
-            inventory = len(self.player.items)
-            if inventory < BAG_CAPACITY:
-                items = arcade.check_for_collision_with_list(self.player, self.item_list)
-                if items:
-                    items = list(filter(lambda i: not i.taken, items))
-                    if len(items) > 0:
-                        for item in items:
-                            if inventory < BAG_CAPACITY:
-                                item_ids = list(map(lambda i: i.id, filter(lambda i: i.code == item.code, game.item_list)))
-                                if not any(id in item_ids for id in self.player.items):
-                                    if item.code in ['C', 'PH', 'L', 'PA', 'W', 'B']:
-                                        pickups.append((item.id, 1))
-                                    else:
-                                        pickups.append((item.id, 0))
-                                    inventory += 1
-                                else:
-                                    self.info = "You already have it with you. Can't pick up again."
-                            else:
-                                self.info = 'Your inventory is full ! [ MAX: 4 items ].'
-            else:
-                self.info = 'Your inventory is full ! [ MAX: 4 items ].'
-            if (self.player.change_x + self.player.change_y) != 0 or pickups:
-                self.io.emit('item', {'item': (self.player.id, pickups, 1, self.player.position)})
-
-
-        elif symbol == arcade.key.F:
-            if self.player.cur_item == -1:
-                self.info = 'Your inventory is empty.'
-            else:
-                drop = self.player.items[self.player.cur_item]
-                item = list(filter(lambda i: i.id == drop, self.item_list))[0]
-                if item.code in ['C', 'PH', 'L', 'PA', 'W', 'B']:
-                    self.io.emit('item', {'item': (self.player.id, [(drop, 1)], 0, self.player.position)})
-                else:
-                    self.io.emit('item', {'item': (self.player.id, [(drop, 0)], 0, self.player.position)})
-
-        elif symbol == arcade.key.E:
-            specials = arcade.check_for_collision_with_list(self.player, self.special_list)
-            if specials:
-                if specials[0].properties['id'] == 0: #Health Booster
-                    if self.player.life == 1:
-                        self.info = "You can't take medicine while health is max."
-                    else:
-                        self.info = 'Looking for medicines ...'
-                        self.io.emit('meds')
-                else:
-                    self.io.emit('light', (self.has_light + 1) % 2)
-            else:
-                doors = arcade.check_for_collision_with_list(self.player, self.door_list)
-                if doors:
-                    keys = keys = list(filter(lambda i: i.code == doors[0].properties['key'], self.item_list))
-                    key_ids = list(map(lambda i: i.id, keys))
-                    if any(id in self.player.items for id in key_ids):
-                        self.io.emit('door', {'door': (self.player.id, doors[0].properties['id'])})
-                    else:
-                        self.info = 'You need {} to access this door.'.format(keys[0].name)
+def findTexture(team, winner):
+    if team == 0:
+        if winner == 0:
+            texture = 'res\CopW.png'
+        else:
+            texture = 'res\CopL.png'
+    else:
+        if winner == 1:
+            texture = 'res\ThiefW.png'
+        else:
+            texture = 'res\ThiefL.png'
+    return texture
 
 
 def main():
     global game
     sio = socketio.Client()
 
+    # When player has successfully connected with server, got to Lobby.
     @sio.event
     def connect():
         print('connected')
         if game:
-            game.lock = True
+            game.lock = True # flag set
             view = LobbyView(game.team, sio, game.light_layer)
             game.window.show_view(view)
 
+    # When initial data is recieved, add player and other players in game.
     @sio.event
     def init(data):
         if game:
@@ -549,16 +558,17 @@ def main():
             for player in data['others']:
                 pid, name, team, pos = player
                 game.others.append(Player(pid, name, team, pos))
-            game.joined = True
+            game.joined = True # flag set
 
-
+    # when new player has joined, add that player in game.
     @sio.event
     def newPlr(data):
-        if game:
+        if game and game.joined:
             pid, name, team, pos = data['player']
             game.others.append(Player(pid, name, team, pos))
 
-
+    # If medicine available restore health to max, else show appropriate message.
+    # PARAM: player_id, status [0: no meds, else: denotes number of meds left.]
     @sio.event
     def meds(data):
         if game:
@@ -573,6 +583,8 @@ def main():
                     player = list(filter(lambda p: p.id == pid, game.others))[0]
                     player.life = 1
 
+    # On each attack, update player's life.
+    # PARAMS: player_id, remaining life
     @sio.event
     def attack(data):
         if game:
@@ -583,6 +595,8 @@ def main():
                 player = list(filter(lambda p: p.id == pid, game.others))[0]
                 player.life = life
 
+    # If player is knocked down, drop every item he had and send him to jail.
+    # status: [0: escaped, 1: jailed]
     @sio.event
     def jail(data):
         if game:
@@ -608,7 +622,8 @@ def main():
                     player.life = 1
                     game.info = "{} escaped from jail.".format(player.name)
 
-
+    # Whenever an item is picked up or dropped, stop player, update items and player inventory.
+    # status: [0: drop, 1: pickup]
     @sio.event
     def item(data):
         if game:
@@ -624,7 +639,7 @@ def main():
                 item.taken = status
                 if pid == game.player.id:
                     if status == 0:
-                        game.player.items.pop(game.player.items.index(id))
+                        game.player.items.remove(id)
                         action = 'dropped'
                         names.append(item.name)
                         if len(game.player.items) == 0:
@@ -662,6 +677,7 @@ def main():
                 player.position = position
                 player.change_x, player.change_y = 0, 0
 
+    # Move player according to the data recieved.
     @sio.event
     def move(data):
         if game:
@@ -675,11 +691,14 @@ def main():
                 player.position = position
                 player.change_x, player.change_y = speed[direction]
 
+    # In case error occurs in connection, notify player.
     @sio.event
     def connect_error(err):
         if game:
             game.msg = "Can't connect with server. Try again later."
 
+    # For turning main switch on and off, which inturn updates lightings.
+    # status: [0: off, 1: on]
     @sio.event
     def light(flag):
         if game:
@@ -687,6 +706,8 @@ def main():
             game.has_light = flag
             game.info = "Main switch has been turned {}.".format(status[flag])
 
+    # Locking and unlocking doors.
+    # status: [0: unlocked, 1: locked]
     @sio.event
     def door(data):
         if game:
@@ -703,7 +724,7 @@ def main():
                 if pid == game.player.id:
                     game.info = 'You Opened the door.'
 
-
+    # Status to stand or end game.
     @sio.event
     def gameStat(data):
         if game:
@@ -716,6 +737,8 @@ def main():
                 view = GameEndView(game.io, winner_team, game.player.team, game.light_layer)
                 game.window.show_view(view)
 
+    # Status for players
+    # status: [2: ready to play, 0: left game]
     @sio.event
     def status(data):
         if game:
@@ -739,21 +762,30 @@ def main():
                                 game.others.remove(player)
                     break
 
+    # WHen player disconnect from game.
     @sio.event
     def disconnect():
         if game:
             print('disconnected')
             msg = "Disconnected from server. Please connect again."
             sio.disconnect()
-            view = ScreenView(sio, msg, game.light_layer)
+            view = HomeView(sio, msg, game.light_layer)
             game.window.show_view(view)
 
+    # Create game window
     window = arcade.Window(SCREEN_WIDTH, SCREEN_HEIGHT, TITLE)
-    # Show initial game load screen.
+
+    # create light layer (context)
     light_layer = LightLayer(SCREEN_WIDTH, SCREEN_HEIGHT)
-    view = ScreenView(sio, None, light_layer)
+
+    # Show home screen.
+    view = HomeView(sio, None, light_layer)
     window.show_view(view)
+
+    # Game loop.
     arcade.run()
+
+    # If window is closed, disconnect from server.
     sio.disconnect()
 
 
