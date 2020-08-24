@@ -47,11 +47,15 @@ def ready(sid):
         shuffle(items['pos'])
         data = {'start': tuple(zip(items['item'], items['pos']))}
         sio.emit('gameStat', data)
-        start_new_thread(find_winner, (sio, ))
+        # start_new_thread(find_winner, (sio, ))
 
 @sio.event
 def move(sid, data):
     sio.emit('move', data)
+
+@sio.event
+def light(sid, flag):
+    sio.emit('light', flag)
 
 @sio.event
 def meds(sid):

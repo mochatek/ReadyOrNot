@@ -7,6 +7,8 @@ from random import randint
 from textwrap import wrap
 
 import arcade
+from arcade.experimental.lights import Light, LightLayer
+
 from aim import Aim
 from player import Player
 from item import Item
@@ -18,10 +20,11 @@ TITLE = "Ready or Not ?"
 SPEED = 0.75
 MARGIN = 160
 BAG_CAPACITY = 4
+AMBIENT_COLOR = (10, 10, 10)
 
 # Initail game screen.
 class ScreenView(arcade.View):
-    def __init__(self, io, msg=None):
+    def __init__(self, io, msg=None, light_layer=None):
         super().__init__()
         global game
         self.io = io
@@ -29,9 +32,11 @@ class ScreenView(arcade.View):
         self.bg = arcade.load_texture('res\screen.png')
         self.team = -1
         self.lock = False
+        self.light_layer = light_layer
 
     def on_draw(self):
         arcade.start_render()
+        self.light_layer.draw()
         arcade.set_viewport(0, SCREEN_WIDTH, 0, SCREEN_HEIGHT)
         arcade.draw_lrwh_rectangle_textured(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, self.bg)
         if self.msg:
@@ -43,7 +48,7 @@ class ScreenView(arcade.View):
         # If player pressed setting button, show info.
         if 374 <= y <= 390 and 373 <= x <= 389:
             # Show settings and other info.
-            view = InfoView(self.io)
+            view = InfoView(self.io, self.light_layer)
             self.window.show_view(view)
 
         # Find team chosen by player.
@@ -67,25 +72,27 @@ class ScreenView(arcade.View):
 
 # Settings and Credits.
 class InfoView(arcade.View):
-    def __init__(self, io):
+    def __init__(self, io, light_layer):
         super().__init__()
         self.bg = arcade.load_texture('res\info.png')
         self.io = io
+        self.light_layer = light_layer
 
     def on_draw(self):
         arcade.start_render()
+        self.light_layer.draw()
         arcade.draw_lrwh_rectangle_textured(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, self.bg)
 
     def on_key_press(self, symbol, modifiers):
         # Switch back to Load screen.
         if symbol == arcade.key.ESCAPE:
-            view = ScreenView(self.io)
+            view = ScreenView(self.io, None, self.light_layer)
             self.window.show_view(view)
 
 
 # Shows joined players and info.
 class LobbyView(arcade.View):
-    def __init__(self, team, io):
+    def __init__(self, team, io, light_layer):
         super().__init__()
         self.joined = False #true once data has been updated in client
         global game
@@ -103,9 +110,11 @@ class LobbyView(arcade.View):
 
         # Message to be displayed below. (It is based on the game status)
         self.statusText = "Press R to Ready .."
+        self.light_layer = light_layer
 
     def on_draw(self):
         arcade.start_render()
+        self.light_layer.draw()
         arcade.draw_lrwh_rectangle_textured(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, self.bg)
 
         # Display game message.
@@ -152,7 +161,7 @@ class LobbyView(arcade.View):
 
 # Shows Win/Lose status after game ends.
 class GameEndView(arcade.View):
-    def __init__(self, io, winner, team):
+    def __init__(self, io, winner, team, light_layer):
         super().__init__()
         if team == 0:
             if winner == 0:
@@ -166,9 +175,11 @@ class GameEndView(arcade.View):
                 file = 'res\ThiefL.png'
         self.io = io
         self.bg = arcade.load_texture(file)
+        self.light_layer = light_layer
 
     def on_draw(self):
         arcade.start_render()
+        self.light_layer.draw()
         arcade.set_viewport(0, SCREEN_WIDTH, 0, SCREEN_HEIGHT)
         arcade.draw_lrwh_rectangle_textured(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, self.bg)
 
@@ -178,7 +189,7 @@ class GameEndView(arcade.View):
             self.io.disconnect()
 
 class GameView(arcade.View):
-    def __init__(self, io, player, others, items):
+    def __init__(self, io, player, others, items, light_layer):
         super().__init__()
         global game
         game =  self
@@ -229,40 +240,83 @@ class GameView(arcade.View):
         for player in self.others:
             self.physics.append(arcade.PhysicsEngineSimple(player, self.block_list))
 
+        self.light_layer = light_layer
+        self.player_light = Light(0, 0, 80, arcade.color.GREEN, 'soft')
+        self.has_light = 0
+
 
     def on_draw(self):
         arcade.start_render()
-        self.jail_list.draw()
-        #self.floor_list.draw()
-        arcade.draw_lrwh_rectangle_textured(0, 0, 1024, 832, self.bg)
-        try:
-            self.block_list.draw()
-        except:
-            pass
+        if not self.has_light:
+            self.light_layer.add(self.player_light)
+            with self.light_layer:
+                self.jail_list.draw()
+                #self.floor_list.draw()
+                arcade.draw_lrwh_rectangle_textured(0, 0, 1024, 832, self.bg)
+                try:
+                    self.block_list.draw()
+                except:
+                    pass
 
+                self.item_list.draw()
 
-        self.item_list.draw()
+                self.others.draw()
+                # Draw Aim control if player is hoding any weapon.
+                if self.aim.toggle:
+                    self.aim.draw()
 
-        self.others.draw()
-        # Draw Aim control if player is hoding any weapon.
-        if self.aim.toggle:
-            self.aim.draw()
+                # Display player
+                self.player_list.draw()
 
-        # Display player
-        self.player_list.draw()
+                # Display players with life and name.
+                arcade.draw_xywh_rectangle_filled(self.player.left, self.player.top + 2, self.player.width * self.player.life, 3, arcade.color.GREEN)
+                arcade.draw_text(self.player.name, self.player.center_x - 12, self.player.center_y + 16, arcade.color.BLUE, 8)
 
-        # Display players with life and name.
-        arcade.draw_xywh_rectangle_filled(self.player.left, self.player.top + 2, self.player.width * self.player.life, 3, arcade.color.GREEN)
-        arcade.draw_text(self.player.name, self.player.center_x - 12, self.player.center_y + 16, arcade.color.BLUE, 8)
+                # Display others life and name based on team.
+                for player in self.others:
+                    if player.team == self.player.team:
+                        arcade.draw_xywh_rectangle_filled(player.left, player.top + 2, player.width * player.life, 3, arcade.color.GREEN)
+                        arcade.draw_text(player.name, player.center_x - 12, player.center_y + 15, arcade.color.BLUE, 8, bold=True)
+                    else:
+                        arcade.draw_xywh_rectangle_filled(player.left, player.top + 2, player.width * player.life, 3, arcade.color.ROSE)
+                        arcade.draw_text(player.name, player.center_x - 12, player.center_y + 15, arcade.color.RED, 8, bold=True)
 
-        # Display others life and name based on team.
-        for player in self.others:
-            if player.team == self.player.team:
-                arcade.draw_xywh_rectangle_filled(player.left, player.top + 2, player.width * player.life, 3, arcade.color.GREEN)
-                arcade.draw_text(player.name, player.center_x - 12, player.center_y + 15, arcade.color.BLUE, 8, bold=True)
-            else:
-                arcade.draw_xywh_rectangle_filled(player.left, player.top + 2, player.width * player.life, 3, arcade.color.ROSE)
-                arcade.draw_text(player.name, player.center_x - 12, player.center_y + 15, arcade.color.RED, 8, bold=True)
+            self.light_layer.draw(ambient_color=AMBIENT_COLOR)
+        else:
+            if self.player_light in self.light_layer:
+                self.light_layer.remove(self.player_light)
+            self.light_layer.draw()
+            self.jail_list.draw()
+            #self.floor_list.draw()
+            arcade.draw_lrwh_rectangle_textured(0, 0, 1024, 832, self.bg)
+            try:
+                self.block_list.draw()
+            except:
+                pass
+
+            self.item_list.draw()
+
+            self.others.draw()
+            # Draw Aim control if player is hoding any weapon.
+            if self.aim.toggle:
+                self.aim.draw()
+
+            # Display player
+            self.player_list.draw()
+
+            # Display players with life and name.
+            arcade.draw_xywh_rectangle_filled(self.player.left, self.player.top + 2, self.player.width * self.player.life, 3, arcade.color.GREEN)
+            arcade.draw_text(self.player.name, self.player.center_x - 12, self.player.center_y + 16, arcade.color.BLUE, 8)
+
+            # Display others life and name based on team.
+            for player in self.others:
+                if player.team == self.player.team:
+                    arcade.draw_xywh_rectangle_filled(player.left, player.top + 2, player.width * player.life, 3, arcade.color.GREEN)
+                    arcade.draw_text(player.name, player.center_x - 12, player.center_y + 15, arcade.color.BLUE, 8, bold=True)
+                else:
+                    arcade.draw_xywh_rectangle_filled(player.left, player.top + 2, player.width * player.life, 3, arcade.color.ROSE)
+                    arcade.draw_text(player.name, player.center_x - 12, player.center_y + 15, arcade.color.RED, 8, bold=True)
+
 
         # Display game message
         arcade.draw_xywh_rectangle_filled(self.view_left, self.view_bottom + 360, SCREEN_WIDTH, 40, arcade.color.BLACK)
@@ -276,6 +330,9 @@ class GameView(arcade.View):
         self.player_list.update()
         self.others.update()
         self.item_list.update()
+
+        if not self.has_light:
+            self.player_light.position = self.player.position
 
         if self.player.jailed:
             if not arcade.check_for_collision_with_list(self.player, self.jail_list):
@@ -458,6 +515,8 @@ class GameView(arcade.View):
                     else:
                         self.info = 'Looking for medicines ...'
                         self.io.emit('meds')
+                else:
+                    self.io.emit('light', (self.has_light + 1) % 2)
             else:
                 doors = arcade.check_for_collision_with_list(self.player, self.door_list)
                 if doors:
@@ -478,7 +537,7 @@ def main():
         print('connected')
         if game:
             game.lock = True
-            view = LobbyView(game.team, sio)
+            view = LobbyView(game.team, sio, game.light_layer)
             game.window.show_view(view)
 
     @sio.event
@@ -622,6 +681,13 @@ def main():
             game.msg = "Can't connect with server. Try again later."
 
     @sio.event
+    def light(flag):
+        if game:
+            status = {0:'off', 1: 'on'}
+            game.has_light = flag
+            game.info = "Main switch have been turned {}.".format(status[flag])
+
+    @sio.event
     def door(data):
         if game:
             pid, door_id = data['door']
@@ -643,11 +709,11 @@ def main():
         if game:
             if 'start' in data:
                 items = data['start']
-                view = GameView(game.io, game.player, game.others, items)
+                view = GameView(game.io, game.player, game.others, items, game.light_layer)
                 game.window.show_view(view)
             else:
                 winner_team = data['stop']
-                view = GameEndView(game.io, winner_team, game.player.team)
+                view = GameEndView(game.io, winner_team, game.player.team, game.light_layer)
                 game.window.show_view(view)
 
     @sio.event
@@ -679,12 +745,13 @@ def main():
             print('disconnected')
             msg = "Disconnected from server. Please connect again."
             sio.disconnect()
-            view = ScreenView(sio, msg)
+            view = ScreenView(sio, msg, game.light_layer)
             game.window.show_view(view)
 
     window = arcade.Window(SCREEN_WIDTH, SCREEN_HEIGHT, TITLE)
     # Show initial game load screen.
-    view = ScreenView(sio)
+    light_layer = LightLayer(SCREEN_WIDTH, SCREEN_HEIGHT)
+    view = ScreenView(sio, None, light_layer)
     window.show_view(view)
     arcade.run()
     sio.disconnect()
