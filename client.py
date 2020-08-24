@@ -685,7 +685,7 @@ def main():
         if game:
             status = {0:'off', 1: 'on'}
             game.has_light = flag
-            game.info = "Main switch have been turned {}.".format(status[flag])
+            game.info = "Main switch has been turned {}.".format(status[flag])
 
     @sio.event
     def door(data):
