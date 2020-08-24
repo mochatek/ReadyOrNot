@@ -10,8 +10,7 @@ items = {
     'pos': [(770, 430), (970, 435), (225, 640), (125, 455), (395, 690), (255, 480)]
     }
 meds_count = 8
-team_state = {0:{'jailed_count': 0, 'items_count': 0},
-            1:{'jailed_count': 0, 'items_count': 0}}
+team_state = {'jailed_count': [0, 0], 'items_count': [0, 0]}
 players = {}
 
 sio = socketio.Server()
@@ -31,6 +30,7 @@ def disconnect(sid):
     del players[sid]
     if not players:
         meds_count = 8
+        team_state = {'jailed_count': [0, 0], 'items_count': [0, 0]}
     print('disconnect ', sid)
 
 
@@ -69,16 +69,21 @@ def meds(sid):
 @sio.event
 def item(sid, data):
     global players
+    global team_state
     if not players[sid]['jailed']:
         items = data['item'][1]
         status = data['item'][2]
         if status == 0:
-            players[sid]['items'].pop(players[sid]['items'].index(items[0]))
-            team_state[players[sid]['team']]['items_count'] -= 1
+            item_id, is_loot = items[0]
+            players[sid]['items'].pop(players[sid]['items'].index(item_id))
+            if is_loot == 1:
+                team_state['items_count'][players[sid]['team']] -= 1
         else:
             for item in items:
-                players[sid]['items'].append(item)
-                team_state[players[sid]['team']]['items_count'] += 1
+                item_id, is_loot = item
+                players[sid]['items'].append(item_id)
+                if is_loot == 1:
+                    team_state['items_count'][players[sid]['team']] += 1
         sio.emit('item', data)
 
 @sio.event
@@ -88,15 +93,17 @@ def door(sid, data):
 @sio.event
 def escape(sid):
     global players
+    global team_state
     data = {'jail': (0, sid, 0, 0)}
     players[sid]['jailed'] = False
     players[sid]['life'] = 1
-    team_state[players[sid]['team']]['jailed_count'] -= 1
+    team_state['jailed_count'][players[sid]['team']] -= 1
     sio.emit('jail', data)
 
 @sio.event
 def attack(sid, data):
     global players
+    global team_state
     if not players[sid]['jailed']:
         pid, pos, damage = data['hits']
         if pid in players: #not left
@@ -104,7 +111,7 @@ def attack(sid, data):
             if players[pid]['life'] == 0:
                 sio.emit('jail', {'jail': (1, pid, pos, players[pid]['items'])})
                 players[pid]['jailed'] = True
-                team_state[players[pid]['team']]['jailed_count'] += 1
+                team_state['jailed_count'][players[sid]['team']] += 1
             else:
                 sio.emit('attack', {'hits': (pid, players[pid]['life'])})
 
@@ -139,17 +146,13 @@ def find_winner(sio):
     global team_state
     while 1:
         winner_team = -1
-        items_count = [team_state[0]['items_count'], team_state[1]['items_count']]
-        if 4 in items_count:
-            winner_team = items_count.index(4)
-        else:
-            jailed_count = [team_state[0]['jailed_count'], team_state[1]['jailed_count']]
-            if 1 in jailed_count:
-                winner_team = (jailed_count.index(1) + 1) % 2
+        if 4 in team_state['items_count']:
+            winner_team = team_state['items_count'].index(4)
+        elif 1 in team_state['jailed_count']:
+            winner_team = (team_state['jailed_count'].index(1) + 1) % 2
         if winner_team != -1:
             sio.emit('gameStat', {'stop': winner_team})
-            team_state = {0:{'jailed_count': 0, 'items_count': 0},
-                        1:{'jailed_count': 0, 'items_count': 0}}
+            team_state = {'jailed_count': [0, 0], 'items_count': [0, 0]}
             break
 
 

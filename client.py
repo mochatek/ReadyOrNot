@@ -423,7 +423,10 @@ class GameView(arcade.View):
                             if inventory < BAG_CAPACITY:
                                 item_ids = list(map(lambda i: i.id, filter(lambda i: i.code == item.code, game.item_list)))
                                 if not any(id in item_ids for id in self.player.items):
-                                    pickups.append(item.id)
+                                    if item.code in ['C', 'PH', 'L', 'PA', 'W', 'B']:
+                                        pickups.append((item.id, 1))
+                                    else:
+                                        pickups.append((item.id, 0))
                                     inventory += 1
                                 else:
                                     self.info = "You already have it with you. Can't pick up again."
@@ -440,8 +443,11 @@ class GameView(arcade.View):
                 self.info = 'Your inventory is empty.'
             else:
                 drop = self.player.items[self.player.cur_item]
-                self.io.emit('item', {'item': (self.player.id, [drop], 0, self.player.position)})
-
+                item = list(filter(lambda i: i.id == drop, self.item_list))[0]
+                if item.code in ['C', 'PH', 'L', 'PA', 'W', 'B']:
+                    self.io.emit('item', {'item': (self.player.id, [(drop, 1)], 0, self.player.position)})
+                else:
+                    self.io.emit('item', {'item': (self.player.id, [(drop, 0)], 0, self.player.position)})
 
         elif symbol == arcade.key.E:
             specials = arcade.check_for_collision_with_list(self.player, self.special_list)
@@ -552,7 +558,8 @@ def main():
             names = []
             action = None
 
-            for id in item_ids:
+            for i in item_ids:
+                id = i[0]
                 item = list(filter(lambda i: i.id == id, game.item_list))[0]
                 item.position = position
                 item.taken = status
