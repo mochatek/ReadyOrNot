@@ -142,7 +142,7 @@ def attack(sid, data):
     if not players[sid]['jailed']:
         pid, pos, damage = data
         if pid in players: # not left
-            players[pid]['life'] = max(0, players[pid]['life'] - damage)
+            players[pid]['life'] = max(0, round(players[pid]['life'] - damage, 1))
             if players[pid]['life'] == 0: # Got knocked down
                 sio.emit('jail', [1, pid, pos, players[pid]['items']]) # send to jail
                 players[pid]['jailed'] = True

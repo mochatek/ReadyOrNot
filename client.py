@@ -189,7 +189,9 @@ class GameView(arcade.View):
         game =  self
         self.view_left = 0
         self.view_bottom = 0
+        self.item_cache = {-1: arcade.load_texture('res\Items\\none.png')}
 
+        self.life_texture = arcade.load_texture('res\life.png')
         self.bg = arcade.load_texture('res\BG.png')
 
         # Load map and process layers.
@@ -219,7 +221,9 @@ class GameView(arcade.View):
         id = 14
         for item in items:
             item_code, position = item
-            self.item_list.append(Item(id, position, item_code))
+            item_obj = Item(id, position, item_code)
+            self.item_list.append(item_obj)
+            self.item_cache[id] = item_obj
             id += 1
 
         # Set initial game message.
@@ -258,11 +262,18 @@ class GameView(arcade.View):
 
             self.draw_all_game_objects()
 
+        arcade.draw_xywh_rectangle_filled(self.view_left, self.view_bottom + 360, SCREEN_WIDTH, 60, arcade.color.BLACK)
+
+        # Show player life in number
+        arcade.draw_texture_rectangle(self.view_left + 30, self.view_bottom + 385, 15, 15, self.life_texture)
+        arcade.draw_text(str(int(self.player.life * 100)), self.view_left + 23, self.view_bottom + 365, arcade.color.RED, font_size=11, bold=True)
+
         # Display game message
-        arcade.draw_xywh_rectangle_filled(self.view_left, self.view_bottom + 360, SCREEN_WIDTH, 40, arcade.color.BLACK)
         arcade.draw_text(self.info, self.view_left + 70, self.view_bottom + 370, arcade.color.GREEN_YELLOW, 10, bold = True)
         # arcade.draw_text('Loot info here', self.view_left + 70, self.view_bottom + 365, arcade.color.BLUE, 10, bold = True)
 
+        # Show current item
+        arcade.draw_texture_rectangle(self.view_left + 380, self.view_bottom + 380, 40, 40, self.get_item_texture(), alpha=190)
 
     def on_update(self, delta_time):
         for physics in self.physics:
@@ -383,6 +394,13 @@ class GameView(arcade.View):
                     else:
                         self.info = 'You need {} to access this door.'.format(keys[0].name)
 
+    def get_item_texture(self):
+        if self.player.cur_item == -1:
+            return self.item_cache.get(-1) # none when no item
+        else:
+            item_id = self.player.items[self.player.cur_item] # find current item's id
+            return self.item_cache.get(item_id).texture # return item texture
+
 
     def toggle_item_info(self):
         # All messages except item-info ends with dot.
@@ -426,10 +444,10 @@ class GameView(arcade.View):
         arcade.draw_lrwh_rectangle_textured(0, 0, 1024, 832, self.bg)
         try:
             self.block_list.draw()
+            self.item_list.draw()
+            self.others.draw()
         except:
             pass
-        self.item_list.draw()
-        self.others.draw()
         if self.aim.toggle: # Draw only if player is holding any weapon
             self.aim.draw()
         self.player_list.draw()
@@ -449,9 +467,9 @@ class GameView(arcade.View):
 
 
     # Drop items where player was last standing when jailed or leaves game.
-    def drop_items(self, position, items):
-        items = list(filter(lambda i:i.id in items, self.item_list))
-        for item in items:
+    def drop_items(self, position, item_ids):
+        for id in item_ids:
+            item = self.item_cache.get(id)
             x, y = position
             x += randint(0, 5)
             y += randint(0, 5)
@@ -470,20 +488,16 @@ class GameView(arcade.View):
 
     # Loads swipe cards and weapons.
     def load_items(self):
-        self.item_list.append(Item(0, (400,82), 'YELLOW'))
-        self.item_list.append(Item(1, (620, 82), 'RED'))
-        self.item_list.append(Item(2, (110, 370), 'BLUE'))
-        self.item_list.append(Item(3, (400, 495), 'BLUE'))
-        self.item_list.append(Item(4, (95, 675), 'GREEN'))
-        self.item_list.append(Item(5, (815, 690), 'GREEN'))
-        self.item_list.append(Item(6, (80, 305), 'K'))
-        self.item_list.append(Item(7, (205, 305), 'K'))
-        self.item_list.append(Item(8, (820, 305), 'K'))
-        self.item_list.append(Item(9, (940, 305), 'K'))
-        self.item_list.append(Item(10, (910, 585), 'G'))
-        self.item_list.append(Item(11, (970, 555), 'G'))
-        self.item_list.append(Item(12, (110, 585), 'G'))
-        self.item_list.append(Item(13, (60, 585), 'G'))
+        items = [(0, (400,82), 'YELLOW'), (1, (620, 82), 'RED'), (2, (110, 370), 'BLUE'), (3, (400, 495), 'BLUE'),
+                (4, (95, 675), 'GREEN'), (5, (815, 690), 'GREEN'), (6, (80, 305), 'K'), (7, (205, 305), 'K'),
+                (8, (820, 305), 'K'), (9, (940, 305), 'K'), (10, (910, 585), 'G'), (11, (970, 555), 'G'),
+                (12, (110, 585), 'G'), (13, (60, 585), 'G')]
+
+        for item in items:
+            item_obj = Item(item[0], item[1], item[2])
+            self.item_list.append(item_obj)
+            self.item_cache[item[0]] = item_obj
+
 
     # Scrolling screen according to player movement.
     def scroll_screen(self):
@@ -633,7 +647,7 @@ def main():
 
             for i in item_ids:
                 id = i[0]
-                item = list(filter(lambda i: i.id == id, game.item_list))[0]
+                item = game.item_cache.get(id)
                 item.position = position
                 item.taken = status
                 if pid == game.player.id:
@@ -655,7 +669,7 @@ def main():
                             game.player.cur_item = len(game.player.items) - 1
 
                     if game.player.cur_item != -1:
-                        item = list(filter(lambda i: i.id == game.player.items[game.player.cur_item], game.item_list))[0]
+                        item = game.item_cache.get(game.player.items[game.player.cur_item])
                         if item.code in ['G', 'K']:
                             game.aim.toggle = True
                             game.aim.damage = item.damage
@@ -759,7 +773,7 @@ def main():
                             except:
                                 pass
                             finally:
-                                game.others.remove(player)
+                                player.remove_from_sprite_lists()
                     break
 
     # WHen player disconnect from game.
