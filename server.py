@@ -34,9 +34,9 @@ def connect(sid, environ):
 def disconnect(sid):
     global players
     global meds_count
+    global team_state
 
-    data = {'player': (sid, 0, players[sid]['items'])}
-    sio.emit('status', data, skip_sid=sid) # notify others
+    sio.emit('status', [sid, 0, players[sid]['items']], skip_sid=sid) # notify others
     sio.emit('disconnect', to=sid) # terminate connection
 
     del players[sid] # remove data
@@ -54,15 +54,15 @@ def ready(sid):
     global items
 
     players[sid]['status'] = 2
-    data = {'player': (sid, 2, [])}
-    sio.emit('status', data) # notify all players
+    sio.emit('status', [sid, 2, []]) # notify all players
 
     # If every player is ready, then signal players to start game
     if list(map(lambda p:p['status'],players.values())).count(2) == 2:
         shuffle(items['item'])
         shuffle(items['pos'])
-        data = {'start': tuple(zip(items['item'], items['pos']))}
-        sio.emit('gameStat', data)
+        data = [1] # status: [0: stop, 1: start]
+        data.append(tuple(zip(items['item'], items['pos']))) # loot items
+        sio.emit('gameState', data)
 
 # Player Movement
 @sio.event
@@ -82,12 +82,12 @@ def meds(sid):
 
     if meds_count == 0: # Nothing left
         status = 0
-        sio.emit('meds', {'meds': (sid, status)}, to=sid)
+        sio.emit('meds', [sid, status], to=sid)
     else:
         meds_count -= 1
         status = meds_count
         players[sid]['life'] = 1
-        sio.emit('meds', {'meds': (sid, status)})
+        sio.emit('meds', [sid, status])
 
 # When player pickup or drop items.
 # status: [0: drop, 1: pickup]
@@ -96,21 +96,25 @@ def item(sid, data):
     global players
     global team_state
 
-    if not players[sid]['jailed']: # confirm not in jail
-        items = data['item'][1]
-        status = data['item'][2]
-        if status == 0: # drop
-            item_id, is_loot = items[0]
-            players[sid]['items'].remove(item_id)
-            if is_loot == 1: # if lootable item, update game state
-                team_state['items_count'][players[sid]['team']] -= 1
-        else: # pickup
-            for item in items:
-                item_id, is_loot = item
-                players[sid]['items'].append(item_id)
-                if is_loot == 1:
-                    team_state['items_count'][players[sid]['team']] += 1
+    items = data[1]
+    status = data[2]
+    if status == 0: # drop
+        item_id, is_loot = items[0]
+        players[sid]['items'].remove(item_id)
+        if is_loot == 1: # if lootable item, update game state
+            team_state['items_count'][players[sid]['team']] -= 1
         sio.emit('item', data)
+    else: # pickup
+        for item in items:
+            item_id, is_loot = item
+            players[sid]['items'].append(item_id)
+            if is_loot == 1:
+                team_state['items_count'][players[sid]['team']] += 1
+        sio.emit('item', data)
+
+        winner_team = check_for_winner() # checking for game end
+        if winner_team != -1:
+            sio.emit('gameState', [0, winner_team])
 
 # Open/clode door
 @sio.event
@@ -123,11 +127,10 @@ def escape(sid):
     global players
     global team_state
 
-    data = {'jail': (0, sid, 0, 0)} # (status, player_id, position, items)
     players[sid]['jailed'] = False
     players[sid]['life'] = 1
     team_state['jailed_count'][players[sid]['team']] -= 1 # update game state
-    sio.emit('jail', data) # notify all players
+    sio.emit('jail', [0, sid, 0, 0]) # notify all players (status, player_id, position, items)
 
 # Whenever a player attacks, update life
 # if knocked down, send to jail
@@ -137,15 +140,19 @@ def attack(sid, data):
     global team_state
 
     if not players[sid]['jailed']:
-        pid, pos, damage = data['hits']
-        if pid in players: #not left
+        pid, pos, damage = data
+        if pid in players: # not left
             players[pid]['life'] = max(0, players[pid]['life'] - damage)
             if players[pid]['life'] == 0: # Got knocked down
-                sio.emit('jail', {'jail': (1, pid, pos, players[pid]['items'])}) # send to jail
+                sio.emit('jail', [1, pid, pos, players[pid]['items']]) # send to jail
                 players[pid]['jailed'] = True
                 team_state['jailed_count'][players[sid]['team']] += 1 # update game state
+
+                winner_team = check_for_winner() # checking for game end
+                if winner_team != -1:
+                    sio.emit('gameState', [0, winner_team])
             else:
-                sio.emit('attack', {'hits': (pid, players[pid]['life'])})
+                sio.emit('attack', [pid, players[pid]['life']])
 
 @sio.event
 def join(sid, data):
@@ -162,34 +169,27 @@ def join(sid, data):
         'items': [],
         'jailed': False
     }
-    new = tuple(players[sid].values())[:4]
-    data = {
-        'you': new,
-        'others': tuple(map(lambda id:tuple(players[id].values())[:4], filter(lambda id: id != sid, players)))
-    }
-    sio.emit('init', data, to=sid) #send other players data to joined player
 
-    data = {
-        'player': new
-    }
-    sio.emit('newPlr', data, skip_sid=sid) #broadcast new player data
+    player = tuple(players[sid].values())[:4]
+    data = [player, tuple(map(lambda id:tuple(players[id].values())[:4], filter(lambda id: id != sid, players)))]
+
+    sio.emit('init', data, to=sid) #send player's and other players data to joined player
+
+    sio.emit('newPlr', [player], skip_sid=sid) #broadcast new player data
 
 
-# finding the winner
-# if winner found, then issue game end.
-def find_winner(sio):
+# checks for the winner
+# if winner found, then return winning team.
+def check_for_winner():
     global team_state
 
-    while 1:
-        winner_team = -1
-        if 4 in team_state['items_count']:
-            winner_team = team_state['items_count'].index(4)
-        elif 1 in team_state['jailed_count']:
-            winner_team = (team_state['jailed_count'].index(1) + 1) % 2
-        if winner_team != -1:
-            sio.emit('gameStat', {'stop': winner_team})
-            team_state = {'jailed_count': [0, 0], 'items_count': [0, 0]}
-            break
+    winner_team = -1
+    if 4 in team_state['items_count']:
+        winner_team = team_state['items_count'].index(4)
+    elif 1 in team_state['jailed_count']:
+        winner_team = (team_state['jailed_count'].index(1) + 1) % 2
+
+    return winner_team
 
 
 

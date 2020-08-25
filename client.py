@@ -163,7 +163,7 @@ class GameEndView(arcade.View):
 
         # Choose end screen image.
         texture = findTexture(team, winner)
-        self.bg = arcade.load_texture(file)
+        self.bg = arcade.load_texture(texture)
 
     def on_draw(self):
         arcade.start_render()
@@ -185,6 +185,7 @@ class GameView(arcade.View):
         self.player = player # Player
         self.others = others # Other players
         self.joined = True
+        self.light_layer = light_layer
         game =  self
         self.view_left = 0
         self.view_bottom = 0
@@ -235,9 +236,8 @@ class GameView(arcade.View):
         for player in self.others:
             self.physics.append(arcade.PhysicsEngineSimple(player, self.block_list))
 
-        self.light_layer = light_layer
         self.player_light = Light(0, 0, 80, arcade.color.GREEN, 'soft') # Light to follow player
-        self.has_light = 0 # [0:main switch off, 1:main switch on]
+        self.has_light = 1 # [0:main switch off, 1:main switch on]
 
 
     def on_draw(self):
@@ -294,8 +294,7 @@ class GameView(arcade.View):
         # If target is locked, then send attack data
         if self.aim.target:
             player = self.aim.target
-            hits = (player.id, player.position, self.aim.damage)
-            self.io.emit('attack', {'hits': hits})
+            self.io.emit('attack', [player.id, player.position, self.aim.damage])
 
      # Switch between items with player.
     def on_mouse_scroll(self, x, y, scroll_x, scroll_y):
@@ -313,13 +312,13 @@ class GameView(arcade.View):
     def on_key_press(self, symbol, modifiers):
         # Player movement
         if symbol == arcade.key.D and self.player.change_x != SPEED:
-            self.io.emit('move', {'move': (self.player.id, self.player.position, 3)})
+            self.io.emit('move', [self.player.id, self.player.position, 3])
         elif symbol == arcade.key.A and self.player.change_x != -SPEED:
-            self.io.emit('move', {'move': (self.player.id, self.player.position, 2)})
+            self.io.emit('move', [self.player.id, self.player.position, 2])
         elif symbol == arcade.key.W and self.player.change_y != SPEED:
-            self.io.emit('move', {'move': (self.player.id, self.player.position, 0)})
+            self.io.emit('move', [self.player.id, self.player.position, 0])
         elif symbol == arcade.key.S and self.player.change_y != -SPEED:
-            self.io.emit('move', {'move': (self.player.id, self.player.position, 1)})
+            self.io.emit('move', [self.player.id, self.player.position, 1])
 
         # Stop or pickup item
         elif symbol == arcade.key.SPACE:
@@ -348,7 +347,7 @@ class GameView(arcade.View):
 
             # if not idle or has picked up some item, send data to server.
             if (self.player.change_x + self.player.change_y) != 0 or pickups:
-                self.io.emit('item', {'item': (self.player.id, pickups, 1, self.player.position)})
+                self.io.emit('item', [self.player.id, pickups, 1, self.player.position])
 
         # drop item.
         elif symbol == arcade.key.F:
@@ -358,9 +357,9 @@ class GameView(arcade.View):
                 drop = self.player.items[self.player.cur_item]
                 item = list(filter(lambda i: i.id == drop, self.item_list))[0]
                 if item.code in ['C', 'PH', 'L', 'PA', 'W', 'B']:
-                    self.io.emit('item', {'item': (self.player.id, [(drop, 1)], 0, self.player.position)})
+                    self.io.emit('item', [self.player.id, [(drop, 1)], 0, self.player.position])
                 else:
-                    self.io.emit('item', {'item': (self.player.id, [(drop, 0)], 0, self.player.position)})
+                    self.io.emit('item', [self.player.id, [(drop, 0)], 0, self.player.position])
 
         # Access door, FAB and Main switch
         elif symbol == arcade.key.E:
@@ -380,7 +379,7 @@ class GameView(arcade.View):
                     keys = keys = list(filter(lambda i: i.code == doors[0].properties['key'], self.item_list))
                     key_ids = list(map(lambda i: i.id, keys))
                     if any(id in self.player.items for id in key_ids):
-                        self.io.emit('door', {'door': (self.player.id, doors[0].properties['id'])})
+                        self.io.emit('door', [self.player.id, doors[0].properties['id']])
                     else:
                         self.info = 'You need {} to access this door.'.format(keys[0].name)
 
@@ -552,10 +551,10 @@ def main():
     @sio.event
     def init(data):
         if game:
-            pid, name, team, pos = data['you']
+            pid, name, team, pos = data[0] # player
             game.player = Player(pid, name, team, pos)
 
-            for player in data['others']:
+            for player in data[1]: # others
                 pid, name, team, pos = player
                 game.others.append(Player(pid, name, team, pos))
             game.joined = True # flag set
@@ -563,8 +562,8 @@ def main():
     # when new player has joined, add that player in game.
     @sio.event
     def newPlr(data):
-        if game and game.joined:
-            pid, name, team, pos = data['player']
+        if game:
+            pid, name, team, pos = data[0]
             game.others.append(Player(pid, name, team, pos))
 
     # If medicine available restore health to max, else show appropriate message.
@@ -572,7 +571,7 @@ def main():
     @sio.event
     def meds(data):
         if game:
-            pid, status = data['meds']
+            pid, status = data
             if status == 0:
                 game.info = 'Oops! No medicine left.'
             else:
@@ -588,7 +587,7 @@ def main():
     @sio.event
     def attack(data):
         if game:
-            pid, life = data['hits']
+            pid, life = data
             if game.player.id == pid:
                 game.player.life = life
             else:
@@ -600,7 +599,7 @@ def main():
     @sio.event
     def jail(data):
         if game:
-            status, pid, pos, items = data['jail']
+            status, pid, pos, items = data
             if pid == game.player.id:
                 if status == 1:
                     game.player.send_to_jail()
@@ -627,7 +626,7 @@ def main():
     @sio.event
     def item(data):
         if game:
-            pid, item_ids, status, position = data['item']
+            pid, item_ids, status, position = data
 
             names = []
             action = None
@@ -681,7 +680,7 @@ def main():
     @sio.event
     def move(data):
         if game:
-            pid, position, direction = data['move']
+            pid, position, direction = data
             speed = {0: (0, SPEED), 1: (0, -SPEED), 2: (-SPEED, 0), 3: (SPEED, 0)}
             if game.player.id == pid:
                 game.position = position
@@ -711,7 +710,7 @@ def main():
     @sio.event
     def door(data):
         if game:
-            pid, door_id = data['door']
+            pid, door_id = data
             door = list(filter(lambda d:d.properties['id'] == door_id, game.door_list))[0]
             if door.properties['locked'] == 0:
                 door.properties['locked'] = 1
@@ -726,14 +725,15 @@ def main():
 
     # Status to stand or end game.
     @sio.event
-    def gameStat(data):
+    def gameState(data):
         if game:
-            if 'start' in data:
-                items = data['start']
+            status = data[0] # status: [1: start game, 0: stop game]
+            if status == 1:
+                items = data[1]
                 view = GameView(game.io, game.player, game.others, items, game.light_layer)
                 game.window.show_view(view)
             else:
-                winner_team = data['stop']
+                winner_team = data[1]
                 view = GameEndView(game.io, winner_team, game.player.team, game.light_layer)
                 game.window.show_view(view)
 
@@ -744,7 +744,7 @@ def main():
         if game:
             while 1:
                 if game.joined == True:
-                    pid, stat, items = data['player']
+                    pid, stat, items = data
                     if pid == game.player.id:
                         game.player.status = stat
                         game.statusText = 'Waiting for other players ...'
