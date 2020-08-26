@@ -64,7 +64,7 @@ class HomeView(arcade.View):
             self.msg = 'Trying to connect with server. Please wait.'
             game = self
             try:
-                self.io.connect('http://192.168.43.225:5000')
+                self.io.connect('http://localhost:5000')
             except:
                 msg = "Can't connect with server. Try again later."
                 self.lock = False
@@ -191,19 +191,23 @@ class GameView(arcade.View):
         game =  self
         self.view_left = 0
         self.view_bottom = 0
+
+        # Cache for items and players
         self.item_cache = {-1: arcade.load_texture('res\Items\\none.png')}
+        self.player_cache = dict(map(lambda p: (p.id, p), self.others))
+
 
         self.life_texture = arcade.load_texture('res\life.png')
         self.bg = arcade.load_texture('res\BG.png')
 
         # Load map and process layers.
-        map = arcade.read_tmx('res\map.tmx')
+        Map = arcade.read_tmx('res\map.tmx')
         self.block_list = arcade.SpriteList(use_spatial_hash=True, is_static=True) # Spacial hash: Faster collission detection.
-        self.wall_list = arcade.process_layer(map, 'Wall', SCALING) # Walls
-        self.object_list = arcade.process_layer(map, 'Object', SCALING) # Furnitures and objects
-        self.special_list = arcade.process_layer(map, 'Other', SCALING) # FAB and Main switch
-        self.door_list = arcade.process_layer(map, 'Door', SCALING) # Doors
-        self.jail_list = arcade.process_layer(map, 'Jail', SCALING) # Jails
+        self.wall_list = arcade.process_layer(Map, 'Wall', SCALING) # Walls
+        self.object_list = arcade.process_layer(Map, 'Object', SCALING) # Furnitures and objects
+        self.special_list = arcade.process_layer(Map, 'Other', SCALING) # FAB and Main switch
+        self.door_list = arcade.process_layer(Map, 'Door', SCALING) # Doors
+        self.jail_list = arcade.process_layer(Map, 'Jail', SCALING) # Jails
 
         # All blocking sprites.
         self.block_list.extend(self.wall_list)
@@ -270,7 +274,7 @@ class GameView(arcade.View):
         arcade.draw_xywh_rectangle_filled(self.view_left, self.view_bottom + 360, SCREEN_WIDTH, 60, arcade.color.BLACK)
 
         # Show player life in number
-        arcade.draw_texture_rectangle(self.view_left + 30, self.view_bottom + 385, 15, 15, self.life_texture)
+        arcade.draw_texture_rectangle(self.view_left + 30, self.view_bottom + 385, 15, 15, self.life_texture, alpha=190)
         arcade.draw_text(str(int(self.player.life * 100)), self.view_left + 23, self.view_bottom + 365, arcade.color.RED, font_size=11, bold=True)
 
         # Display game message
@@ -371,12 +375,12 @@ class GameView(arcade.View):
             if self.player.cur_item == -1:
                 self.info = 'Your inventory is empty.'
             else:
-                drop = self.player.items[self.player.cur_item]
-                item = list(filter(lambda i: i.id == drop, self.item_list))[0]
+                drop_item_id = self.player.items[self.player.cur_item]
+                item = self.item_cache[drop_item_id]
                 if item.code in ['C', 'PH', 'L', 'PA', 'W', 'B']:
-                    self.io.emit('item', [self.player.id, [(drop, 1)], 0, self.player.position])
+                    self.io.emit('item', [self.player.id, [(drop_item_id, 1)], 0, self.player.position])
                 else:
-                    self.io.emit('item', [self.player.id, [(drop, 0)], 0, self.player.position])
+                    self.io.emit('item', [self.player.id, [(drop_item_id, 0)], 0, self.player.position])
 
         # Access door, FAB and Main switch
         elif symbol == arcade.key.E:
@@ -485,7 +489,7 @@ class GameView(arcade.View):
 
     # Show appropriate msg when an item is switched.
     def show_item_switch_msg(self):
-        item = list(filter(lambda i: i.id == self.player.items[self.player.cur_item], self.item_list))[0]
+        item = self.item_cache[self.player.items[self.player.cur_item]]
         if item.code in ['G', 'K']: # if switched to weapon (gun/knife)
             self.aim.toggle = True # activate aim control
             self.aim.damage = item.damage # set damage of current weapon
@@ -610,7 +614,7 @@ def main():
                     game.player.life = 1
                     game.info = 'Medicines found. Full health restored.\nMedicines left: {}/8.'.format(status)
                 else:
-                    player = list(filter(lambda p: p.id == pid, game.others))[0]
+                    player = game.player_cache[pid]
                     player.life = 1
 
     # On each attack, update player's life.
@@ -623,7 +627,7 @@ def main():
                 game.player.life = life
                 splash_blood(game.blood_list, game.player.position)
             else:
-                player = list(filter(lambda p: p.id == pid, game.others))[0]
+                player = game.player_cache[pid]
                 player.life = life
                 splash_blood(game.blood_list, player.position)
 
@@ -644,7 +648,7 @@ def main():
                     game.player.life = 1
                     game.info = 'You escaped from jail.'
             else:
-                player = list(filter(lambda p: p.id == pid, game.others))[0]
+                player = game.player_cache[pid]
                 if status == 1:
                     player.send_to_jail()
                     game.info = "{} got jailed.".format(player.name)
@@ -705,7 +709,7 @@ def main():
                     names = wrap(names, 40)
                     game.info = 'You {} {}.'.format(action, '\n'.join(names))
             else:
-                player = list(filter(lambda p: p.id == pid, game.others))[0]
+                player = game.player_cache[pid]
                 player.position = position
                 player.change_x, player.change_y = 0, 0
 
@@ -719,7 +723,7 @@ def main():
                 game.position = position
                 game.player.change_x, game.player.change_y = speed[direction]
             else:
-                player = list(filter(lambda p: p.id == pid, game.others))[0]
+                player = game.player_cache[pid]
                 player.position = position
                 player.change_x, player.change_y = speed[direction]
 
@@ -789,6 +793,7 @@ def main():
                                 game.info = '{} left the game.'.format(player.name)
                                 if items:
                                     game.drop_items(player.position, items)
+                                del game.player_cache[pid]
                             except:
                                 pass
                             finally:
