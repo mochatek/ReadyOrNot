@@ -103,6 +103,7 @@ def item(sid, data):
         players[sid]['items'].remove(item_id)
         if is_loot == 1: # if lootable item, update game state
             team_state['items_count'][players[sid]['team']] -= 1
+        data.append(team_state['items_count']) # send loot count also
         sio.emit('item', data)
     else: # pickup
         for item in items:
@@ -110,6 +111,7 @@ def item(sid, data):
             players[sid]['items'].append(item_id)
             if is_loot == 1:
                 team_state['items_count'][players[sid]['team']] += 1
+        data.append(team_state['items_count'])
         sio.emit('item', data)
 
         winner_team = check_for_winner() # checking for game end

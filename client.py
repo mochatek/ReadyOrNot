@@ -191,6 +191,7 @@ class GameView(arcade.View):
         game =  self
         self.view_left = 0
         self.view_bottom = 0
+        self.loots_collected = {0: 0, 1: 0}
 
         # Cache for items and players
         self.item_cache = {-1: arcade.load_texture('res\Items\\none.png')}
@@ -279,7 +280,10 @@ class GameView(arcade.View):
 
         # Display game message
         arcade.draw_text(self.info, self.view_left + 70, self.view_bottom + 370, arcade.color.GREEN_YELLOW, 10, bold = True)
-        # arcade.draw_text('Loot info here', self.view_left + 70, self.view_bottom + 365, arcade.color.BLUE, 10, bold = True)
+
+        # Display team and enemy loot counts.
+        arcade.draw_text(str(self.loots_collected[self.player.team]), self.view_left + 352, self.view_bottom + 377, arcade.color.GREEN, 14, bold = True)
+        arcade.draw_text(str(self.loots_collected[not self.player.team]), self.view_left + 352, self.view_bottom + 362, arcade.color.RED, 14, bold = True)
 
         # Show current item
         arcade.draw_texture_rectangle(self.view_left + 380, self.view_bottom + 380, 40, 40, self.get_item_texture(), alpha=190)
@@ -663,7 +667,7 @@ def main():
     @sio.event
     def item(data):
         if game:
-            pid, item_ids, status, position = data
+            pid, item_ids, status, position, loot_count = data
 
             names = []
             action = None
@@ -673,6 +677,7 @@ def main():
                 item = game.item_cache.get(id)
                 item.position = position
                 item.taken = status
+
                 if pid == game.player.id:
                     if status == 0:
                         game.player.items.remove(id)
@@ -682,6 +687,7 @@ def main():
                             game.player.cur_item = -1
                         else:
                             game.player.cur_item = 0
+
                     elif status == 1:
                         game.player.items.append(id)
                         action = 'picked up'
@@ -700,6 +706,10 @@ def main():
                             game.aim.toggle = False
                     else:
                             game.aim.toggle = False
+
+            # Update loot counts
+            game.loots_collected[0] = loot_count[0]
+            game.loots_collected[1] = loot_count[1]
 
             if pid == game.player.id:
                 game.player.position = position
