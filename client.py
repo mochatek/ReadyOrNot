@@ -1,7 +1,7 @@
 import socketio
 
 from sys import argv
-from random import randint
+from random import randint, randrange
 from textwrap import wrap
 
 import arcade
@@ -10,6 +10,7 @@ from arcade.experimental.lights import Light, LightLayer
 from aim import Aim
 from player import Player
 from item import Item
+from blood import Blood
 
 SCREEN_WIDTH = 400
 SCREEN_HEIGHT = 400
@@ -20,6 +21,7 @@ MARGIN = 160
 BAG_CAPACITY = 4
 AMBIENT_COLOR = (10, 10, 10)
 
+game = None
 
 # Home screen.
 class HomeView(arcade.View):
@@ -62,7 +64,7 @@ class HomeView(arcade.View):
             self.msg = 'Trying to connect with server. Please wait.'
             game = self
             try:
-                self.io.connect('http://localhost:5000')
+                self.io.connect('http://192.168.43.225:5000')
             except:
                 msg = "Can't connect with server. Try again later."
                 self.lock = False
@@ -209,6 +211,9 @@ class GameView(arcade.View):
         self.block_list.extend(self.special_list)
         self.block_list.extend(self.door_list)
 
+        # Blood splash on hit
+        self.blood_list = arcade.SpriteList()
+
         # SpriteList for player sprite.
         self.player_list = arcade.SpriteList()
         self.player_list.append(self.player)
@@ -281,6 +286,7 @@ class GameView(arcade.View):
         self.player_list.update()
         self.others.update()
         self.item_list.update()
+        self.blood_list.update()
 
         # During night mode, player light must follow player.
         if not self.has_light:
@@ -451,6 +457,7 @@ class GameView(arcade.View):
         if self.aim.toggle: # Draw only if player is holding any weapon
             self.aim.draw()
         self.player_list.draw()
+        self.blood_list.draw()
 
         # Display player's with life and name.
         arcade.draw_xywh_rectangle_filled(self.player.left, self.player.top + 2, self.player.width * self.player.life, 3, arcade.color.GREEN)
@@ -547,6 +554,16 @@ def findTexture(team, winner):
             texture = 'res\ThiefL.png'
     return texture
 
+def splash_blood(blood_list, position):
+    x, y = position
+    for i in range(10):
+        blood_drop = Blood(4, 4, arcade.color.RED)
+        while blood_drop.change_y == 0 and blood_drop.change_x == 0:
+            blood_drop.change_y = randrange(-2, 3)
+            blood_drop.change_x = randrange(-2, 3)
+            blood_drop.center_x = x
+            blood_drop.center_y = y
+            blood_list.append(blood_drop)
 
 def main():
     global game
@@ -604,9 +621,11 @@ def main():
             pid, life = data
             if game.player.id == pid:
                 game.player.life = life
+                splash_blood(game.blood_list, game.player.position)
             else:
                 player = list(filter(lambda p: p.id == pid, game.others))[0]
                 player.life = life
+                splash_blood(game.blood_list, player.position)
 
     # If player is knocked down, drop every item he had and send him to jail.
     # status: [0: escaped, 1: jailed]

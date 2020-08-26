@@ -184,9 +184,9 @@ def check_for_winner():
     global team_state
 
     winner_team = -1
-    if 4 in team_state['items_count']:
+    if 6 in team_state['items_count']:
         winner_team = team_state['items_count'].index(4)
-    elif 1 in team_state['jailed_count']:
+    elif 2 in team_state['jailed_count']:
         winner_team = (team_state['jailed_count'].index(1) + 1) % 2
 
     return winner_team
