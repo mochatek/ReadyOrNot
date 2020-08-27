@@ -253,6 +253,19 @@ class GameView(arcade.View):
         self.player_light = Light(0, 0, 80, arcade.color.GREEN, 'soft') # Light to follow player
         self.has_light = 1 # [0:main switch off, 1:main switch on]
 
+        # Load sounds
+        self.gun_sound = arcade.load_sound('res\sound\gun.mp3')
+        self.stab_sound = arcade.load_sound('res\sound\stab.mp3')
+        self.door_sound = arcade.load_sound('res\sound\door.mp3')
+        self.item_sound = arcade.load_sound('res\sound\item.mp3')
+        self.hurt_sound = arcade.load_sound('res\sound\hurt.mp3')
+        self.jail_sound = arcade.load_sound('res\sound\jail.mp3')
+        self.error_sound = arcade.load_sound('res\sound\error.mp3')
+        self.light_sound = arcade.load_sound('res\sound\light.mp3')
+        self.health_sound = arcade.load_sound('res\sound\health.mp3')
+        self.bgm = arcade.load_sound('res\sound\\bgm.mp3')
+        self.bgm.play(0.2)
+
 
     def on_draw(self):
         arcade.start_render()
@@ -313,6 +326,10 @@ class GameView(arcade.View):
         # Update Viewport based on player movement.
         self.scroll_screen()
 
+        if self.bgm.get_stream_position() == 0:
+            self.bgm.stop()
+            self.bgm.play(0.2)
+
 
     # Click for attacking.
     def on_mouse_press(self, x, y, button, modifiers):
@@ -320,6 +337,12 @@ class GameView(arcade.View):
         if self.aim.target:
             player = self.aim.target
             self.io.emit('attack', [player.id, player.position, self.aim.damage])
+
+        if self.aim.toggle:
+            if self.item_cache[self.player.items[self.player.cur_item]].code == 'K':
+                arcade.play_sound(self.stab_sound, 0.2)
+            elif self.item_cache[self.player.items[self.player.cur_item]].code == 'G':
+                arcade.play_sound(self.gun_sound, 0.05)
 
      # Switch between items with player.
     def on_mouse_scroll(self, x, y, scroll_x, scroll_y):
@@ -333,6 +356,7 @@ class GameView(arcade.View):
 
             # Show game message of item switch.
             self.show_item_switch_msg()
+            arcade.play_sound(self.item_sound)
 
     def on_key_press(self, symbol, modifiers):
         # Player movement
@@ -369,6 +393,7 @@ class GameView(arcade.View):
                                 self.info = 'Your inventory is full ! [ MAX: 4 items ].'
             else:
                 self.info = 'Your inventory is full ! [ MAX: 4 items ].'
+                arcade.play_sound(self.error_sound, 0.2)
 
             # if not idle or has picked up some item, send data to server.
             if (self.player.change_x + self.player.change_y) != 0 or pickups:
@@ -393,6 +418,7 @@ class GameView(arcade.View):
                 if specials[0].properties['id'] == 0: #Health Booster
                     if self.player.life == 1:
                         self.info = "You can't take medicine while health is max."
+                        arcade.play_sound(self.error_sound, 0.2)
                     else:
                         self.info = 'Looking for medicines ...'
                         self.io.emit('meds')
@@ -407,6 +433,7 @@ class GameView(arcade.View):
                         self.io.emit('door', [self.player.id, doors[0].properties['id']])
                     else:
                         self.info = 'You need {} to access this door.'.format(keys[0].name)
+                        arcade.play_sound(self.error_sound, 0.2)
 
     def get_item_texture(self):
         if self.player.cur_item == -1:
@@ -460,12 +487,12 @@ class GameView(arcade.View):
             self.block_list.draw()
             self.item_list.draw()
             self.others.draw()
+            if self.aim.toggle: # Draw only if player is holding any weapon
+                self.aim.draw()
+            self.player_list.draw()
+            self.blood_list.draw()
         except:
             pass
-        if self.aim.toggle: # Draw only if player is holding any weapon
-            self.aim.draw()
-        self.player_list.draw()
-        self.blood_list.draw()
 
         # Display player's with life and name.
         arcade.draw_xywh_rectangle_filled(self.player.left, self.player.top + 2, self.player.width * self.player.life, 3, arcade.color.GREEN)
@@ -613,10 +640,12 @@ def main():
             pid, status = data
             if status == 0:
                 game.info = 'Oops! No medicine left.'
+                arcade.play_sound(game.error_sound, 0.5)
             else:
                 if pid == game.player.id:
                     game.player.life = 1
                     game.info = 'Medicines found. Full health restored.\nMedicines left: {}/8.'.format(status)
+                    arcade.play_sound(game.health_sound, 0.7)
                 else:
                     player = game.player_cache[pid]
                     player.life = 1
@@ -630,6 +659,7 @@ def main():
             if game.player.id == pid:
                 game.player.life = life
                 splash_blood(game.blood_list, game.player.position)
+                arcade.play_sound(game.hurt_sound, 0.2)
             else:
                 player = game.player_cache[pid]
                 player.life = life
@@ -647,16 +677,19 @@ def main():
                     game.aim.toggle = False
                     game.info = "You got jailed. Hope for being rescued."
                     game.drop_items(pos, items)
+                    arcade.play_sound(game.jail_sound, 0.4)
                 else:
                     game.player.jailed = False
                     game.player.life = 1
                     game.info = 'You escaped from jail.'
+                    arcade.play_sound(game.health_sound, 0.7)
             else:
                 player = game.player_cache[pid]
                 if status == 1:
                     player.send_to_jail()
                     game.info = "{} got jailed.".format(player.name)
                     game.drop_items(pos, items)
+                    arcade.play_sound(game.jail_sound, 0.4)
                 else:
                     player.jailed = False
                     player.life = 1
@@ -718,6 +751,7 @@ def main():
                     names = ', '.join(names)
                     names = wrap(names, 40)
                     game.info = 'You {} {}.'.format(action, '\n'.join(names))
+                    arcade.play_sound(game.item_sound)
             else:
                 player = game.player_cache[pid]
                 player.position = position
@@ -751,6 +785,7 @@ def main():
             status = {0:'off', 1: 'on'}
             game.has_light = flag
             game.info = "Main switch has been turned {}.".format(status[flag])
+            arcade.play_sound(game.light_sound, 0.1)
 
     # Locking and unlocking doors.
     # status: [0: unlocked, 1: locked]
@@ -764,11 +799,13 @@ def main():
                 game.block_list.append(door)
                 if pid == game.player.id:
                     game.info = 'You Locked the door.'
+                    arcade.play_sound(game.door_sound, 0.4)
             else:
                 door.properties['locked'] = 0
                 game.block_list.remove(door)
                 if pid == game.player.id:
                     game.info = 'You Opened the door.'
+                    arcade.play_sound(game.door_sound, 0.4)
 
     # Status to stand or end game.
     @sio.event
