@@ -1,7 +1,7 @@
 import socketio
 
 from sys import argv
-from random import randint, randrange
+from random import randrange
 from textwrap import wrap
 
 import arcade
@@ -11,6 +11,10 @@ from aim import Aim
 from player import Player
 from item import Item
 from blood import Blood
+
+
+#########################################################################################################################
+
 
 SCREEN_WIDTH = 400
 SCREEN_HEIGHT = 400
@@ -23,11 +27,16 @@ AMBIENT_COLOR = (10, 10, 10)
 
 game = None
 
+
+#########################################################################################################################
+
+
 # Home screen.
 class HomeView(arcade.View):
     def __init__(self, io, msg=None, light_layer=None):
         super().__init__()
         global game
+
         self.io = io
         self.msg = msg
         self.team = -1 # [0:Guards, 1: Thief]
@@ -70,6 +79,8 @@ class HomeView(arcade.View):
                 self.lock = False
 
 
+#########################################################################################################################
+
 
 # Settings and Credits.
 class SettingsView(arcade.View):
@@ -92,12 +103,16 @@ class SettingsView(arcade.View):
             self.window.show_view(view)
 
 
+#########################################################################################################################
+
+
 # Shows joined players and info.
 class LobbyView(arcade.View):
     def __init__(self, team, io, light_layer):
         super().__init__()
         self.joined = False # [True: once data from server has been assigned in client]
         global game
+
         game = self
         self.io = io
         self.statusText = "Press R to Ready .."
@@ -128,8 +143,6 @@ class LobbyView(arcade.View):
 
             # Draw other players and name.
             y = 268
-            # sort_order = {0:False, 1:True}
-            # for p in sorted(self.data, key = lambda x:x[6], reverse = sort_order.get(self.player.team)):
             for i in range(3):
                 y = y - 50
                 # Not joined or left.
@@ -156,6 +169,9 @@ class LobbyView(arcade.View):
                 self.io.emit('ready')
 
 
+#########################################################################################################################
+
+
 # Shows Win/Lose status after game ends.
 class GameEndView(arcade.View):
     def __init__(self, io, winner, team, light_layer):
@@ -179,10 +195,15 @@ class GameEndView(arcade.View):
         if 364 <= x <= 386 and  13 <= y <= 31:
             self.io.disconnect()
 
+
+#########################################################################################################################
+
+
 class GameView(arcade.View):
     def __init__(self, io, player, others, items, light_layer):
         super().__init__()
         global game
+
         self.io = io
         self.player = player # Player
         self.others = others # Other players
@@ -266,7 +287,6 @@ class GameView(arcade.View):
         self.bgm = arcade.load_sound('res\sound\\bgm.mp3')
         self.bgm.play(0.2)
 
-
     def on_draw(self):
         arcade.start_render()
 
@@ -330,7 +350,6 @@ class GameView(arcade.View):
             self.bgm.stop()
             self.bgm.play(0.2)
 
-
     # Click for attacking.
     def on_mouse_press(self, x, y, button, modifiers):
         # If target is locked, then send attack data
@@ -373,27 +392,25 @@ class GameView(arcade.View):
         elif symbol == arcade.key.SPACE:
             pickups = []
             inventory = len(self.player.items)
-            if inventory < BAG_CAPACITY:
-                items = arcade.check_for_collision_with_list(self.player, self.item_list)
+            items = arcade.check_for_collision_with_list(self.player, self.item_list)
+            if items:
+                items = list(filter(lambda i: not i.taken, items))
                 if items:
-                    items = list(filter(lambda i: not i.taken, items))
-                    if items:
-                        for item in items:
-                            if inventory < BAG_CAPACITY:
-                                item_ids = list(map(lambda i: i.id, filter(lambda i: i.code == item.code, game.item_list)))
-                                if not any(id in item_ids for id in self.player.items):
-                                    if item.code in ['C', 'PH', 'L', 'PA', 'W', 'B']:
-                                        pickups.append((item.id, 1))
-                                    else:
-                                        pickups.append((item.id, 0))
-                                    inventory += 1
+                    for item in items:
+                        if inventory < BAG_CAPACITY:
+                            item_ids = list(map(lambda i: i.id, filter(lambda i: i.code == item.code, game.item_list)))
+                            if not any(id in item_ids for id in self.player.items):
+                                if item.code in ['C', 'PH', 'L', 'PA', 'W', 'B']:
+                                    pickups.append((item.id, 1))
                                 else:
-                                    self.info = "You already have it with you. Can't pick up again."
+                                    pickups.append((item.id, 0))
+                                inventory += 1
                             else:
-                                self.info = 'Your inventory is full ! [ MAX: 4 items ].'
-            else:
-                self.info = 'Your inventory is full ! [ MAX: 4 items ].'
-                arcade.play_sound(self.error_sound, 0.2)
+                                self.info = "You already have it with you. Can't pick up again."
+                                arcade.play_sound(self.error_sound, 0.2)
+                        else:
+                            self.info = 'Your inventory is full ! [ MAX: 4 items ].'
+                            arcade.play_sound(self.error_sound, 0.2)
 
             # if not idle or has picked up some item, send data to server.
             if (self.player.change_x + self.player.change_y) != 0 or pickups:
@@ -403,6 +420,7 @@ class GameView(arcade.View):
         elif symbol == arcade.key.F:
             if self.player.cur_item == -1:
                 self.info = 'Your inventory is empty.'
+                arcade.play_sound(self.error_sound, 0.2)
             else:
                 drop_item_id = self.player.items[self.player.cur_item]
                 item = self.item_cache[drop_item_id]
@@ -441,7 +459,6 @@ class GameView(arcade.View):
         else:
             item_id = self.player.items[self.player.cur_item] # find current item's id
             return self.item_cache.get(item_id).texture # return item texture
-
 
     def toggle_item_info(self):
         # All messages except item-info ends with dot.
@@ -507,14 +524,13 @@ class GameView(arcade.View):
                 arcade.draw_xywh_rectangle_filled(player.left, player.top + 2, player.width * player.life, 3, arcade.color.ROSE)
                 arcade.draw_text(player.name, player.center_x - 12, player.center_y + 15, arcade.color.RED, 8, bold=True)
 
-
     # Drop items where player was last standing when jailed or leaves game.
     def drop_items(self, position, item_ids):
         for id in item_ids:
             item = self.item_cache.get(id)
             x, y = position
-            x += randint(0, 5)
-            y += randint(0, 5)
+            x += randrange(0, 6)
+            y += randrange(0, 6)
             item.position = (x, y)
             item.taken = False
 
@@ -539,7 +555,6 @@ class GameView(arcade.View):
             item_obj = Item(item[0], item[1], item[2])
             self.item_list.append(item_obj)
             self.item_cache[item[0]] = item_obj
-
 
     # Scrolling screen according to player movement.
     def scroll_screen(self):
@@ -576,6 +591,10 @@ class GameView(arcade.View):
         if changed == True:
             arcade.set_viewport(self.view_left, self.view_left + SCREEN_WIDTH, self.view_bottom, self.view_bottom + SCREEN_HEIGHT)
 
+
+#########################################################################################################################
+
+
 def findTexture(team, winner):
     if team == 0:
         if winner == 0:
@@ -599,6 +618,10 @@ def splash_blood(blood_list, position):
             blood_drop.center_x = x
             blood_drop.center_y = y
             blood_list.append(blood_drop)
+
+
+#########################################################################################################################
+
 
 def main():
     global game
@@ -874,6 +897,7 @@ def main():
     sio.disconnect()
 
 
+#########################################################################################################################
 
 
 if __name__ == '__main__':

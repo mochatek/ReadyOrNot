@@ -2,6 +2,10 @@ import eventlet
 import socketio
 from random import shuffle
 
+
+#########################################################################################################################
+
+
 # Cop:0 Thief:1
 pos = {0:[(330,110), (380,110) ], 1:[(680,110), (730,110)]}
 
@@ -19,6 +23,10 @@ team_state = {'jailed_count': [0, 0], 'items_count': [0, 0]}
 
 # Players in game
 players = {}
+
+
+#########################################################################################################################
+
 
 sio = socketio.Server()
 app = socketio.WSGIApp(sio)
@@ -180,6 +188,9 @@ def join(sid, data):
     sio.emit('newPlr', [player], skip_sid=sid) #broadcast new player data
 
 
+#########################################################################################################################
+
+
 # checks for the winner
 # if winner found, then return winning team.
 def check_for_winner():
@@ -193,6 +204,8 @@ def check_for_winner():
 
     return winner_team
 
+
+#########################################################################################################################
 
 
 if __name__ == '__main__':
