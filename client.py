@@ -1,6 +1,5 @@
 import socketio
 
-from sys import argv
 from random import randrange
 from textwrap import wrap
 
@@ -11,7 +10,7 @@ from aim import Aim
 from player import Player
 from item import Item
 from blood import Blood
-
+from config import Config
 
 #########################################################################################################################
 
@@ -26,7 +25,7 @@ BAG_CAPACITY = 4
 AMBIENT_COLOR = (10, 10, 10)
 
 game = None
-
+config = Config()
 
 #########################################################################################################################
 
@@ -73,7 +72,7 @@ class HomeView(arcade.View):
             self.msg = 'Trying to connect with server. Please wait.'
             game = self
             try:
-                self.io.connect('http://localhost:5000')
+                self.io.connect(f'http://{config.host}:5000')
             except:
                 msg = "Can't connect with server. Try again later."
                 self.lock = False
@@ -123,8 +122,7 @@ class LobbyView(arcade.View):
         self.item_list = arcade.SpriteList()
 
         # Request to join game.
-        name = argv[1]
-        self.io.emit('join', [name, team])
+        self.io.emit('join', [config.name, team])
 
     def on_draw(self):
         arcade.start_render()
