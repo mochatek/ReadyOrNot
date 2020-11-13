@@ -202,12 +202,12 @@ class GameView(arcade.View):
         super().__init__()
         global game
 
-        self.io = io
         self.player = player # Player
         self.others = others # Other players
         self.joined = True
-        self.light_layer = light_layer
         game =  self
+        self.io = io
+        self.light_layer = light_layer
         self.view_left = 0
         self.view_bottom = 0
         self.loots_collected = {0: 0, 1: 0}
