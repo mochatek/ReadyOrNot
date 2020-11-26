@@ -17,6 +17,8 @@ class Item(Sprite):
             'PA': ('painting', 'Monalisa Painting', '[ Worth Rs.5200 Cr ]'),
             'W': ('watch', 'Patek Luxury Watch', '[ Worth Rs.30 Cr ]'),
             'B': ('key', "BMW Key", '[ Car worths Rs.12 Cr ]'),
+            'J': ('jewel', "Gold and Jewels", '[ Worths Rs.5 Cr ]'),
+            'M': ('coupon', "MochaTek Coupon", '[ Free software license ]'),
         }
 
         super().__init__('res\Items\{}.png'.format(item_dict[item][0]))

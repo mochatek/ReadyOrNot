@@ -1,11 +1,10 @@
-import socketio
-
 """
 LIB Changes:
 easygui > boxes > multi_fillable_box.py > class GUItk > __init__() : Line 272 = self.set_pos('300x200+300+200')
 pyglet > gl > lib.py > errcheck() > Line 108 = #raise GLException(msg)
 """
 
+import socketio
 from random import randrange
 from textwrap import wrap
 
@@ -83,7 +82,7 @@ class HomeView(arcade.View):
                 # Get player name and host IP from user input
                 config.getConfigFromUser()
 
-                self.io.connect(f'http://{ config.host }:5000')
+                self.io.connect(f'http://{config.host}:5000')
             except Exception as e:
                 print(e)
                 msg = "Can't connect with server. Try again later."
@@ -410,7 +409,7 @@ class GameView(arcade.View):
                         if inventory < BAG_CAPACITY:
                             item_ids = list(map(lambda i: i.id, filter(lambda i: i.code == item.code, game.item_list)))
                             if not any(id in item_ids for id in self.player.items):
-                                if item.code in ['C', 'PH', 'L', 'PA', 'W', 'B']:
+                                if item.code in ['C', 'PH', 'L', 'PA', 'W', 'B', 'J', 'M']:
                                     pickups.append((item.id, 1))
                                 else:
                                     pickups.append((item.id, 0))
@@ -434,7 +433,7 @@ class GameView(arcade.View):
             else:
                 drop_item_id = self.player.items[self.player.cur_item]
                 item = self.item_cache[drop_item_id]
-                if item.code in ['C', 'PH', 'L', 'PA', 'W', 'B']:
+                if item.code in ['C', 'PH', 'L', 'PA', 'W', 'B', 'J', 'M']:
                     self.io.emit('item', [self.player.id, [(drop_item_id, 1)], 0, self.player.position])
                 else:
                     self.io.emit('item', [self.player.id, [(drop_item_id, 0)], 0, self.player.position])
@@ -851,6 +850,7 @@ def main():
                 game.window.show_view(view)
             else:
                 winner_team = data[1]
+                game.bgm.stop()
                 view = GameEndView(game.io, winner_team, game.player.team, game.light_layer)
                 game.window.show_view(view)
 

@@ -19,8 +19,8 @@ pos = {0:[(330,110), (380,110) ], 1:[(680,110), (730,110)]}
 
 # Loot items
 items = {
-    'item': ['W', 'C', 'PA', 'PH', 'B', 'L'],
-    'pos': [(770, 430), (970, 435), (225, 640), (125, 455), (395, 690), (255, 480)]
+    'item': ['W', 'C', 'PA', 'PH', 'J', 'M', 'L', 'B'],
+    'pos': [(770, 430), (970, 435), (225, 640), (125, 455), (395, 690), (255, 480), (575, 770), (480, 580)]
     }
 
 # Number of medicines remaining
@@ -32,6 +32,8 @@ team_state = {'jailed_count': [0, 0], 'items_count': [0, 0]}
 # Players in game
 players = {}
 
+# Game Mode: {2: Solo, 4: Duo}
+gameMode = int(input('Choose Mode [2-Solo, 4-Duo]: '))
 
 #########################################################################################################################
 
@@ -39,12 +41,10 @@ players = {}
 sio = socketio.Server()
 app = socketio.WSGIApp(sio)
 
-
 # When player is connected
 @sio.event
 def connect(sid, environ):
     print(Fore.WHITE + 'Connection request recieved.')
-
 
 # When any player disconenct from server:
 # notify others about leaving with (player_id, ids of items he had [for dropping])
@@ -68,7 +68,6 @@ def disconnect(sid):
         print(Fore.WHITE + 'Game Ended.')
         print(Fore.MAGENTA + '-' * 60)
 
-
 # When player says he is ready to play
 @sio.event
 def ready(sid):
@@ -80,7 +79,7 @@ def ready(sid):
     print(Fore.GREEN + 'Player Ready: ' + Fore.WHITE + players[sid]["name"])
 
     # If every player is ready, then signal players to start game
-    if list(map(lambda p:p['status'],players.values())).count(2) == 2:
+    if list(map(lambda p:p['status'],players.values())).count(2) == gameMode:
         shuffle(items['item'])
         shuffle(items['pos'])
         data = [1] # status: [0: stop, 1: start]
@@ -88,18 +87,15 @@ def ready(sid):
         sio.emit('gameState', data)
         print(Fore.WHITE + 'Game Started.')
 
-
 # Player Movement
 @sio.event
 def move(sid, data):
     sio.emit('move', data)
 
-
 # Toggling lights
 @sio.event
 def light(sid, flag):
     sio.emit('light', flag)
-
 
 # When player try to take medicines
 @sio.event
@@ -115,7 +111,6 @@ def meds(sid):
         status = meds_count
         players[sid]['life'] = 1
         sio.emit('meds', [sid, status])
-
 
 # When player pickup or drop items.
 # status: [0: drop, 1: pickup]
@@ -149,12 +144,10 @@ def item(sid, data):
             print(Fore.WHITE + 'Game Ended.')
             print(Fore.MAGENTA + '-' * 60)
 
-
 # Open/clode door
 @sio.event
 def door(sid, data):
     sio.emit('door', data)
-
 
 # Player escaped from jail
 @sio.event
@@ -166,7 +159,6 @@ def escape(sid):
     players[sid]['life'] = 1
     team_state['jailed_count'][players[sid]['team']] -= 1 # update game state
     sio.emit('jail', [0, sid, 0, 0]) # notify all players (status, player_id, position, items)
-
 
 # Whenever a player attacks, update life
 # if knocked down, send to jail
@@ -189,7 +181,6 @@ def attack(sid, data):
                     sio.emit('gameState', [0, winner_team])
             else:
                 sio.emit('attack', [pid, players[pid]['life']])
-
 
 @sio.event
 def join(sid, data):
@@ -225,10 +216,13 @@ def check_for_winner():
     global team_state
 
     winner_team = -1
-    if 4 in team_state['items_count']:
-        winner_team = team_state['items_count'].index(4)
-    elif 2 in team_state['jailed_count']:
-        winner_team = (team_state['jailed_count'].index(1) + 1) % 2
+    loot_target = gameMode * 2
+    jail_target = gameMode // 2
+
+    if loot_target in team_state['items_count']:
+        winner_team = team_state['items_count'].index(loot_target)
+    elif jail_target in team_state['jailed_count']:
+        winner_team = (team_state['jailed_count'].index(jail_target) + 1) % 2
 
     return winner_team
 
@@ -239,5 +233,4 @@ def check_for_winner():
 if __name__ == '__main__':
     print(Fore.YELLOW + f"( SERVER IP: { gethostbyname(gethostname()) } )".center(60, '_'))
     print()
-
     eventlet.wsgi.server(eventlet.listen(('', 5000)), app, log_output=False)
