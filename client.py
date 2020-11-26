@@ -355,7 +355,7 @@ class GameView(arcade.View):
         # Update Viewport based on player movement.
         self.scroll_screen()
 
-        if self.bgm.get_stream_position() == 0:
+        if self.bgm and self.bgm.get_stream_position() == 0:
             self.bgm.stop()
             self.bgm.play(0.2)
 
@@ -851,6 +851,7 @@ def main():
             else:
                 winner_team = data[1]
                 game.bgm.stop()
+                game.bgm = None
                 view = GameEndView(game.io, winner_team, game.player.team, game.light_layer)
                 game.window.show_view(view)
 

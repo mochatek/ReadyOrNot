@@ -231,6 +231,7 @@ def check_for_winner():
 
 
 if __name__ == '__main__':
+    print()
     print(Fore.YELLOW + f"( SERVER IP: { gethostbyname(gethostname()) } )".center(60, '_'))
     print()
     eventlet.wsgi.server(eventlet.listen(('', 5000)), app, log_output=False)
