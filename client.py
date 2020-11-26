@@ -1,5 +1,11 @@
 import socketio
 
+"""
+LIB Changes:
+easygui > boxes > multi_fillable_box.py > class GUItk > __init__() : Line 272 = self.set_pos('300x200+300+200')
+pyglet > gl > lib.py > errcheck() > Line 108 = #raise GLException(msg)
+"""
+
 from random import randrange
 from textwrap import wrap
 
@@ -11,6 +17,8 @@ from player import Player
 from item import Item
 from blood import Blood
 from config import Config
+
+import os
 
 #########################################################################################################################
 
@@ -72,8 +80,12 @@ class HomeView(arcade.View):
             self.msg = 'Trying to connect with server. Please wait.'
             game = self
             try:
-                self.io.connect(f'http://{config.host}:5000')
-            except:
+                # Get player name and host IP from user input
+                config.getConfigFromUser()
+
+                self.io.connect(f'http://{ config.host }:5000')
+            except Exception as e:
+                print(e)
                 msg = "Can't connect with server. Try again later."
                 self.lock = False
 
@@ -152,8 +164,8 @@ class LobbyView(arcade.View):
                         file = self.others[i].file
                         arcade.Sprite(file, 1, center_x=120, center_y=y).draw()
                         arcade.draw_text(self.others[i].name, 200, y-10, color[self.others[i].status], 12, bold=True)
-                    except:
-                        pass
+                    except Exception as e:
+                        print(e)
 
     def on_mouse_press(self, x, y, button, modifiers):
         # Go back to home.
@@ -506,8 +518,8 @@ class GameView(arcade.View):
                 self.aim.draw()
             self.player_list.draw()
             self.blood_list.draw()
-        except:
-            pass
+        except Exception as e:
+            print(e)
 
         # Display player's with life and name.
         arcade.draw_xywh_rectangle_filled(self.player.left, self.player.top + 2, self.player.width * self.player.life, 3, arcade.color.GREEN)
@@ -862,8 +874,8 @@ def main():
                                 if items:
                                     game.drop_items(player.position, items)
                                 del game.player_cache[pid]
-                            except:
-                                pass
+                            except Exception as e:
+                                print(e)
                             finally:
                                 player.remove_from_sprite_lists()
                     break

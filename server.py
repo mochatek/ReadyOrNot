@@ -1,7 +1,15 @@
 import eventlet
+from socket import gethostname, gethostbyname
 import socketio
 from random import shuffle
+import pyfiglet
+from colorama import Fore, Style
 
+
+#########################################################################################################################
+
+result = pyfiglet.figlet_format("Ready or Not")
+print(Fore.CYAN + result)
 
 #########################################################################################################################
 
@@ -31,10 +39,12 @@ players = {}
 sio = socketio.Server()
 app = socketio.WSGIApp(sio)
 
+
 # When player is connected
 @sio.event
 def connect(sid, environ):
-    print('connected', sid)
+    print(Fore.WHITE + 'Connection request recieved.')
+
 
 # When any player disconenct from server:
 # notify others about leaving with (player_id, ids of items he had [for dropping])
@@ -47,13 +57,17 @@ def disconnect(sid):
     sio.emit('status', [sid, 0, players[sid]['items']], skip_sid=sid) # notify others
     sio.emit('disconnect', to=sid) # terminate connection
 
+    print(Fore.RED + 'Player disconnected: ' + Fore.WHITE + players[sid]["name"])
     del players[sid] # remove data
 
     # If it was the last player, then reset game data
     if not players:
         meds_count = 8
         team_state = {'jailed_count': [0, 0], 'items_count': [0, 0]}
-    print('disconnect ', sid)
+
+        print(Fore.WHITE + 'Game Ended.')
+        print(Fore.MAGENTA + '-' * 60)
+
 
 # When player says he is ready to play
 @sio.event
@@ -63,6 +77,7 @@ def ready(sid):
 
     players[sid]['status'] = 2
     sio.emit('status', [sid, 2, []]) # notify all players
+    print(Fore.GREEN + 'Player Ready: ' + Fore.WHITE + players[sid]["name"])
 
     # If every player is ready, then signal players to start game
     if list(map(lambda p:p['status'],players.values())).count(2) == 2:
@@ -71,16 +86,20 @@ def ready(sid):
         data = [1] # status: [0: stop, 1: start]
         data.append(tuple(zip(items['item'], items['pos']))) # loot items
         sio.emit('gameState', data)
+        print(Fore.WHITE + 'Game Started.')
+
 
 # Player Movement
 @sio.event
 def move(sid, data):
     sio.emit('move', data)
 
+
 # Toggling lights
 @sio.event
 def light(sid, flag):
     sio.emit('light', flag)
+
 
 # When player try to take medicines
 @sio.event
@@ -96,6 +115,7 @@ def meds(sid):
         status = meds_count
         players[sid]['life'] = 1
         sio.emit('meds', [sid, status])
+
 
 # When player pickup or drop items.
 # status: [0: drop, 1: pickup]
@@ -126,10 +146,15 @@ def item(sid, data):
         if winner_team != -1:
             sio.emit('gameState', [0, winner_team])
 
+            print(Fore.WHITE + 'Game Ended.')
+            print(Fore.MAGENTA + '-' * 60)
+
+
 # Open/clode door
 @sio.event
 def door(sid, data):
     sio.emit('door', data)
+
 
 # Player escaped from jail
 @sio.event
@@ -141,6 +166,7 @@ def escape(sid):
     players[sid]['life'] = 1
     team_state['jailed_count'][players[sid]['team']] -= 1 # update game state
     sio.emit('jail', [0, sid, 0, 0]) # notify all players (status, player_id, position, items)
+
 
 # Whenever a player attacks, update life
 # if knocked down, send to jail
@@ -164,6 +190,7 @@ def attack(sid, data):
             else:
                 sio.emit('attack', [pid, players[pid]['life']])
 
+
 @sio.event
 def join(sid, data):
     global players
@@ -186,6 +213,7 @@ def join(sid, data):
     sio.emit('init', data, to=sid) #send player's and other players data to joined player
 
     sio.emit('newPlr', [player], skip_sid=sid) #broadcast new player data
+    print(Fore.GREEN + 'Player Joined: ' + Fore.WHITE + name)
 
 
 #########################################################################################################################
@@ -197,7 +225,7 @@ def check_for_winner():
     global team_state
 
     winner_team = -1
-    if 6 in team_state['items_count']:
+    if 4 in team_state['items_count']:
         winner_team = team_state['items_count'].index(4)
     elif 2 in team_state['jailed_count']:
         winner_team = (team_state['jailed_count'].index(1) + 1) % 2
@@ -209,4 +237,7 @@ def check_for_winner():
 
 
 if __name__ == '__main__':
-    eventlet.wsgi.server(eventlet.listen(('', 5000)), app)
+    print(Fore.YELLOW + f"( SERVER IP: { gethostbyname(gethostname()) } )".center(60, '_'))
+    print()
+
+    eventlet.wsgi.server(eventlet.listen(('', 5000)), app, log_output=False)
