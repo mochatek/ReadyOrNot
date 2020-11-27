@@ -50,6 +50,7 @@ class HomeView(arcade.View):
         self.light_layer = light_layer
 
         self.bg = arcade.load_texture('res\screen.png')
+        self.click_sound = arcade.load_sound('res\sound\click.mp3')
 
     def on_draw(self):
         arcade.start_render()
@@ -63,14 +64,17 @@ class HomeView(arcade.View):
     def on_mouse_press(self, x, y, button, modifiers):
         # Click on setting button.
         if 374 <= y <= 390 and 373 <= x <= 389:
+            arcade.play_sound(self.click_sound, 0.15)
             view = SettingsView(self.io, self.light_layer)
             self.window.show_view(view)
 
         # Choosing team.
         elif 120 <= y <= 136:
             if  96 <= x <= 141:
+                arcade.play_sound(self.click_sound, 0.15)
                 self.team = 0
             elif 249 <= x <= 294:
+                arcade.play_sound(self.click_sound, 0.15)
                 self.team = 1
 
         # Check whether any team was selected.
@@ -86,6 +90,7 @@ class HomeView(arcade.View):
             except Exception as e:
                 print(e)
                 msg = "Can't connect with server. Try again later."
+                self.team = -1
                 self.lock = False
 
 
@@ -100,6 +105,7 @@ class SettingsView(arcade.View):
         self.light_layer = light_layer
 
         self.bg = arcade.load_texture('res\info.png')
+        self.click_sound = arcade.load_sound('res\sound\click.mp3')
 
     def on_draw(self):
         arcade.start_render()
@@ -109,6 +115,7 @@ class SettingsView(arcade.View):
     def on_key_press(self, symbol, modifiers):
         # Switch back to home screen.
         if symbol == arcade.key.ESCAPE:
+            arcade.play_sound(self.click_sound, 0.15)
             view = HomeView(self.io, None, self.light_layer)
             self.window.show_view(view)
 
@@ -129,6 +136,7 @@ class LobbyView(arcade.View):
         self.light_layer = light_layer
 
         self.bg = arcade.load_texture('res\lobby.png')
+        self.click_sound = arcade.load_sound('res\sound\click.mp3')
         self.others = arcade.SpriteList()
         self.item_list = arcade.SpriteList()
 
@@ -169,12 +177,14 @@ class LobbyView(arcade.View):
     def on_mouse_press(self, x, y, button, modifiers):
         # Go back to home.
         if 364 <= x <= 386 and  13 <= y <= 31:
+            arcade.play_sound(self.click_sound, 0.15)
             self.io.disconnect()
 
     def on_key_press(self, key, modifiers):
         # Ready to play.
         if self.joined:
             if key == arcade.key.R:
+                arcade.play_sound(self.click_sound, 0.15)
                 self.io.emit('ready')
 
 
@@ -191,6 +201,7 @@ class GameEndView(arcade.View):
         # Choose end screen image.
         texture = findTexture(team, winner)
         self.bg = arcade.load_texture(texture)
+        self.click_sound = arcade.load_sound('res\sound\click.mp3')
 
     def on_draw(self):
         arcade.start_render()
@@ -202,6 +213,7 @@ class GameEndView(arcade.View):
     def on_mouse_press(self, x, y, button, modifiers):
         # Go back to Home.
         if 364 <= x <= 386 and  13 <= y <= 31:
+            arcade.play_sound(self.click_sound, 0.15)
             self.io.disconnect()
 
 
