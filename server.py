@@ -189,7 +189,7 @@ def attack(sid, data):
             if players[pid]['life'] == 0: # Got knocked down
                 sio.emit('jail', [1, pid, pos, players[pid]['items']]) # send to jail
                 players[pid]['jailed'] = True
-                team_state['jailed_count'][players[sid]['team']] += 1 # update game state
+                team_state['jailed_count'][players[pid]['team']] += 1 # update game state
 
                 winner_team = check_for_winner() # checking for game end
                 if winner_team != -1:
