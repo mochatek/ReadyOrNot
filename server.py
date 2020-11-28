@@ -1,13 +1,28 @@
+"""
+Copy fyglet/fonts folder to root
+SPEC
+____
+hiddenimports=['engineio.async_drivers.eventlet', 'eventlet.hubs.epolls', 'eventlet.hubs.kqueue',
+    'eventlet.hubs.selects', 'dns.dnssec', 'dns.e164', 'dns.edns', 'dns.entropy', 'dns.exception',
+    'dns.flags', 'dns.grange', 'dns.hash', 'dns.inet', 'dns.ipv4', 'dns.ipv6', 'dns.message', 'dns.name',
+    'dns.namedict', 'dns.node', 'dns.opcode', 'dns.query', 'dns.rcode', 'dns.rdata', 'dns.rdataclass',
+    'dns.rdataset', 'dns.rdatatype', 'dns.renderer', 'dns.resolver', 'dns.reversename', 'dns.rrset',
+    'dns.set', 'dns.tokenizer', 'dns.tsig', 'dns.tsigkeyring', 'dns.ttl', 'dns.update', 'dns.version',
+    'dns.wiredata', 'dns.zone']
+"""
+
+
 import eventlet
 from socket import gethostname, gethostbyname
 import socketio
 from random import shuffle
 import pyfiglet
-from colorama import Fore, Style
+from colorama import init, Fore, Style
 
 
 #########################################################################################################################
 
+init(convert=True)
 result = pyfiglet.figlet_format("Ready or Not")
 print(Fore.CYAN + result)
 

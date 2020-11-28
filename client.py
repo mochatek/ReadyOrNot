@@ -1,5 +1,6 @@
 """
-LIB Changes:
+LIB Changes
+___________
 easygui > boxes > multi_fillable_box.py > class GUItk > __init__() : Line 272 = self.set_pos('300x200+300+200')
 pyglet > gl > lib.py > errcheck() > Line 108 = #raise GLException(msg)
 """
