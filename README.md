@@ -3,7 +3,7 @@
 A local-multiplayer RPG action game built using [python-arcade](https://github.com/pythonarcade/arcade). 
 Map designed using [Tiled Map Editor](https://www.mapeditor.org/)
 
-#### Watch the gameplay 👉 [Ready or Not](https://www.linkedin.com/posts/akash-s-panickar-9893ab155_python-arcade-game-activity-6745193709303951360-dwSZ)
+#### Watch the gameplay 👉 [Ready or Not](https://youtu.be/3jix7ebgA_s)
 
 
 ![Home screen](https://github.com/mochatek/ReadyOrNot/blob/master/res/screen.png)
